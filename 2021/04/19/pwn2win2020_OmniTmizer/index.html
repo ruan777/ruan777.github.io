@@ -17,7 +17,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://z3.ax1x.com/2021/04/20/cTh8Ln.png">
 <meta property="article:published_time" content="2021-04-19T08:53:45.000Z">
-<meta property="article:modified_time" content="2021-04-19T16:32:20.978Z">
+<meta property="article:modified_time" content="2021-04-19T16:37:47.041Z">
 <meta property="article:author" content="ruan">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://z3.ax1x.com/2021/04/20/cTh8Ln.png">
@@ -188,9 +188,9 @@
 
 <p>效果：</p>
 <p><a target="_blank" rel="noopener" href="https://imgtu.com/i/cTh8Ln"><img src="https://z3.ax1x.com/2021/04/20/cTh8Ln.png" alt="cTh8Ln.png"></a></p>
-<h2 id="踩坑"><a href="#踩坑" class="headerlink" title="踩坑"></a>踩坑</h2><p>伪造ArrayBuffer的时候，那个Map最好也伪造一下，就找一个正常的ArrayBuffer对象，把他的Map长啥样照抄过来就行；</p>
-<p>还有就是这个<a target="_blank" rel="noopener" href="https://blog.infosectcbr.com.au/2020/02/pointer-compression-in-v8.html">pointer compression</a> 的问题，我们泄露出来的地址都只有4个字节，这里的好处就是伪造的时候很好伪造，坏处就是第一次调试的时候很难受，而且仅仅只是伪造FixedDoubleArray达不到任意地址读写的目的，所以还是要依赖ArrayBuffer来任意地址读写，伪造对象的时候老是忘记这茬，还有就是伪造对象的时候记得地址+1；</p>
-<p>还有就是那个伪造对象的没看懂，感觉差了那么点东西才能理解</p>
+<h2 id="踩坑"><a href="#踩坑" class="headerlink" title="踩坑"></a>踩坑</h2><p>伪造ArrayBuffer的时候，那个Map最好也伪造一下，就找一个正常的ArrayBuffer对象，把它的Map长啥样照抄过来就行；</p>
+<p>因为这个<a target="_blank" rel="noopener" href="https://blog.infosectcbr.com.au/2020/02/pointer-compression-in-v8.html">pointer compression</a> 的问题，我们泄露出来的地址都只有4个字节，这里的好处就是伪造的时候很好伪造，坏处就是第一次调试的时候很难受，而且仅仅只是伪造FixedDoubleArray达不到任意地址读写的目的，所以还是要依赖ArrayBuffer来任意地址读写（伪造对象的时候记得地址+1）；</p>
+<p>还有一个疑问就是那个伪造对象的没看懂，感觉还是差了那么点东西才能理解</p>
 <h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><p>2020 Pwn2Win OmniTmizer Challenge：<a target="_blank" rel="noopener" href="https://yichenchai.github.io/blog/omnitmizer">https://yichenchai.github.io/blog/omnitmizer</a></p>
 <p>V8逃逸分析（escape-analysis）N1CTF2020 Escape <a target="_blank" rel="noopener" href="https://www.anquanke.com/post/id/224317">https://www.anquanke.com/post/id/224317</a></p>
 
