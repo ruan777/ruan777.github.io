@@ -6,13 +6,17 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://yoursite.com">
-  <title>Archives | ruan</title>
+  <title>spider-monkey 编译相关 | ruan</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="ruan">
-<meta property="og:url" content="http://yoursite.com/archives/index.html">
+  <meta name="description" content="粗略记录下Windows编译spider-monkey">
+<meta property="og:type" content="article">
+<meta property="og:title" content="spider-monkey 编译相关">
+<meta property="og:url" content="http://yoursite.com/2022/04/19/spider-monkey%E7%BC%96%E8%AF%91%E7%9B%B8%E5%85%B3/index.html">
 <meta property="og:site_name" content="ruan">
+<meta property="og:description" content="粗略记录下Windows编译spider-monkey">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2022-04-19T09:21:45.000Z">
+<meta property="article:modified_time" content="2022-04-19T07:29:03.223Z">
 <meta property="article:author" content="ruan">
 <meta name="twitter:card" content="summary">
   
@@ -136,295 +140,161 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
+            <article id="post-spider-monkey编译相关" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
   
+    <h1 class="article-title" itemprop="name">
+      spider-monkey 编译相关
+    </h1>
   
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2022" class="archive-year">2022</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/04/19/spider-monkey%E7%BC%96%E8%AF%91%E7%9B%B8%E5%85%B3/" class="archive-article-date">
+
+        
+        <a href="/2022/04/19/spider-monkey%E7%BC%96%E8%AF%91%E7%9B%B8%E5%85%B3/" class="archive-article-date">
   	<time datetime="2022-04-19T09:21:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-04-19</time>
 </a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/04/19/spider-monkey%E7%BC%96%E8%AF%91%E7%9B%B8%E5%85%B3/">spider-monkey 编译相关</a>
-    </h1>
-  
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>粗略记录下Windows编译spider-monkey</p>
+<p><escape><span id="more"></span></escape></p>
+<h2 id="最新版编译"><a href="#最新版编译" class="headerlink" title="最新版编译"></a>最新版编译</h2><p>先根据 <a target="_blank" rel="noopener" href="https://firefox-source-docs.mozilla.org/setup/windows_build.html#building-firefox-on-windows">https://firefox-source-docs.mozilla.org/setup/windows_build.html#building-firefox-on-windows</a> 进行环境准备。其实就是下载vs2019(不过编译spiderMonkey用的是clang)，下载bootstrap.py执行，python3要先安装好，代理挂好。下载大概是2-3G出头</p>
+<p>在根据 <a target="_blank" rel="noopener" href="https://firefox-source-docs.mozilla.org/js/build.html">https://firefox-source-docs.mozilla.org/js/build.html</a> 指示操作，我的配置是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&gt; type C:\mozilla-source\spidermonkeyBuild\debug</span><br><span class="line"># Build only the JS shell</span><br><span class="line">ac_add_options --enable-application=js</span><br><span class="line"># Enable the debugging tools: Assertions, debug only code etc.</span><br><span class="line">ac_add_options --enable-debug</span><br><span class="line"># Enable optimizations as well so that the test suite runs much faster. If</span><br><span class="line"><span class="meta"># you are having trouble using a debugger, you should disable optimization.</span></span><br><span class="line">ac_add_options --enable-optimize</span><br><span class="line"># Use a dedicated objdir <span class="keyword">for</span> SpiderMonkey debug builds to avoid</span><br><span class="line"><span class="meta"># conflicting with Firefox build with default configuration.</span></span><br><span class="line">mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-debug-@CONFIG_GUESS@</span><br></pre></td></tr></table></figure>
 
-        <div class="article-info info-on-right">
-          
-          
+<p>点击运行start-shell.bat，接着去到mozilla的源码目录，先./mach bootstrap 选择 要编译spidermonkey，然后mach会去下载编译要用到的各种东西<br>接着只要./mach build就好</p>
+<h2 id="C61版本编译"><a href="#C61版本编译" class="headerlink" title="C61版本编译"></a>C61版本编译</h2><p>经过我多番折腾，也不保证正确，反正我最后算是编译成功了参考文章是 <a target="_blank" rel="noopener" href="https://doar-e.github.io/blog/2018/11/19/introduction-to-spidermonkey-exploitation/">https://doar-e.github.io/blog/2018/11/19/introduction-to-spidermonkey-exploitation/</a><br>下载 <a target="_blank" rel="noopener" href="https://ftp.mozilla.org/pub/mozilla/libraries/win32/MozillaBuildSetup-3.2.exe%E5%AE%89%E8%A3%85%E5%A5%BD%E5%90%8E%EF%BC%8C%E7%BB%99%E9%82%A3%E4%B8%AAstart-shell.bat%E4%B8%8A%E4%B8%AA%E4%BB%A3%E7%90%86">https://ftp.mozilla.org/pub/mozilla/libraries/win32/MozillaBuildSetup-3.2.exe安装好后，给那个start-shell.bat上个代理</a><br>点击运行start-shell.bat，然后切到源码目录，编译旧版本是为了复现那道ctf的题目：<a target="_blank" rel="noopener" href="https://s3.us-east-2.amazonaws.com/blazefox/blazefox/blaze_firefox_small.tar.gz">https://s3.us-east-2.amazonaws.com/blazefox/blazefox/blaze_firefox_small.tar.gz</a><br>所以根据题目的readme.txt，先checkout下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hg checkout ee6283795f41</span><br></pre></td></tr></table></figure>
+<p>打上patch之后开始真正的编译：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&gt; cd js&#x2F;src</span><br><span class="line">&gt; autoconf-2.13</span><br><span class="line">&gt; mkdir build.asserts</span><br><span class="line">&gt; cd build.asserts</span><br><span class="line">&gt; ..&#x2F;configure --host&#x3D;x86_64-pc-mingw32 --target&#x3D;x86_64-pc-mingw32 --enable-debug</span><br><span class="line">&gt; mozmake -j4</span><br></pre></td></tr></table></figure>
+<p>在执行../configure的时候是有报错的，当时是在源码目录下 ./mach bootstrap了下，选择的是要编译选项1，虽然中途也报错了，但是执行好后，../configure却是没问题了，就没去深究了<br>最后总算是编译成功了一个C61版本的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ .&#x2F;js.exe --version</span><br><span class="line">JavaScript-C61.0a1</span><br></pre></td></tr></table></figure>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><p><a target="_blank" rel="noopener" href="https://firefox-source-docs.mozilla.org/setup/windows_build.html#building-firefox-on-windows">https://firefox-source-docs.mozilla.org/setup/windows_build.html#building-firefox-on-windows</a> </p>
+<p><a target="_blank" rel="noopener" href="https://firefox-source-docs.mozilla.org/js/build.html">https://firefox-source-docs.mozilla.org/js/build.html</a></p>
 
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=http://yoursite.com/2022/04/19/spider-monkey%E7%BC%96%E8%AF%91%E7%9B%B8%E5%85%B3/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/04/02/Chromium-the-false-promise/" class="archive-article-date">
-  	<time datetime="2022-04-02T09:21:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-04-02</time>
-</a>
+<nav id="article-nav">
+  
+  
+    <a href="/2022/04/02/Chromium-the-false-promise/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">PlaidCTF2021 the-false-promise</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/04/02/Chromium-the-false-promise/">PlaidCTF2021 the-false-promise</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
+        
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%80%E6%96%B0%E7%89%88%E7%BC%96%E8%AF%91"><span class="toc-number">1.</span> <span class="toc-text">最新版编译</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#C61%E7%89%88%E6%9C%AC%E7%BC%96%E8%AF%91"><span class="toc-number">2.</span> <span class="toc-text">C61版本编译</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="toc-number">3.</span> <span class="toc-text">参考链接</span></a></li></ol>
+                    </div>
+                </span>
+            </div>
         </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
+        
+    </div>
+</aside>
+
+
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/03/24/chrome-cve-2021-30632/" class="archive-article-date">
-  	<time datetime="2022-03-24T09:21:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-03-24</time>
-</a>
-        </div>
-    	 
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/03/24/chrome-cve-2021-30632/">chrome cve-2021-30632</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/03/23/Chrome-cve-2018-17463/" class="archive-article-date">
-  	<time datetime="2022-03-23T02:21:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-03-23</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/03/23/Chrome-cve-2018-17463/">Chrome cve-2018-17463分析</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/03/21/Chrome-Math_expm1-issue880207/" class="archive-article-date">
-  	<time datetime="2022-03-21T09:21:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-03-21</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/03/21/Chrome-Math_expm1-issue880207/">chrome issue 880207</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/03/09/debug_v8_bytecode/" class="archive-article-date">
-  	<time datetime="2022-03-09T09:21:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-03-09</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/03/09/debug_v8_bytecode/">调试v8 bytecode</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/01/26/pwn2winctf2020-OmniTmizer_new/" class="archive-article-date">
-  	<time datetime="2022-01-26T04:21:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-26</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/01/26/pwn2winctf2020-OmniTmizer_new/">pwn2win CTF OmniTmizer</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/01/21/chrome-cve-2020-16040%E5%88%86%E6%9E%90/" class="archive-article-date">
-  	<time datetime="2022-01-21T09:21:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-21</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/01/21/chrome-cve-2020-16040%E5%88%86%E6%9E%90/">chrome cve-2020-16040 分析</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/01/18/chrome-cve-2021-21220%E5%88%86%E6%9E%90/" class="archive-article-date">
-  	<time datetime="2022-01-18T13:44:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-18</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/01/18/chrome-cve-2021-21220%E5%88%86%E6%9E%90/">chrome cve-2021-21220分析笔记</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/01/15/chrome-cve-2018-6065%E5%88%86%E6%9E%90/" class="archive-article-date">
-  	<time datetime="2022-01-15T09:21:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-15</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/01/15/chrome-cve-2018-6065%E5%88%86%E6%9E%90/">chrome cve-2018-6065 分析</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-    
-    <nav id="page-nav">
-      <span class="page-number current">1</span><a class="page-number" href="/archives/page/2/">2</a><a class="page-number" href="/archives/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/archives/page/5/">5</a><a class="extend next" rel="next" href="/archives/page/2/">Next</a>
-    </nav>
   
 
 
@@ -448,8 +318,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,
